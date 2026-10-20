@@ -1,0 +1,3133 @@
+<!DOCTYPE html>
+<html lang="ms" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analisis & Progress SPM - SMK Kg. Dato' Seri Kamaruddin</title>
+    
+    <!-- PWA Manifest & Theme Color -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#16a34a">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        darkbg: '#0f172a',
+                        darkcard: '#1e293b',
+                        darkborder: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js & DataLabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        import { 
+            getFirestore, 
+            collection, 
+            getDocs, 
+            doc, 
+            setDoc, 
+            deleteDoc,
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDvfEfdqmIHy1HcF4FZFiXDk3EjRPrEbjo",
+            authDomain: "baru-2430c.firebaseapp.com",
+            projectId: "baru-2430c",
+            storageBucket: "baru-2430c.firebasestorage.app",
+            messagingSenderId: "868757950898",
+            appId: "1:868757950898:web:a822d963f7297ce42514ab",
+            measurementId: "G-13FLHBFY4Z"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        window.firebaseApp = app;
+        window.db = db;
+        window.fsCollection = collection;
+        window.fsGetDocs = getDocs;
+        window.fsDoc = doc;
+        window.fsSetDoc = setDoc;
+        window.fsDeleteDoc = deleteDoc;
+        window.fsOnSnapshot = onSnapshot;
+
+        console.log("Firebase & Firestore modular SDK loaded successfully.");
+        window.dispatchEvent(new Event('firebase-ready'));
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printable-slip-area, #printable-slip-area * { visibility: visible; }
+            #printable-slip-area {
+                position: absolute; left: 0; top: 0; width: 100%;
+                background: white !important; color: black !important; padding: 20px;
+                box-shadow: none !important; border: none !important;
+            }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-darkbg text-gray-800 dark:text-gray-100 min-h-screen transition-colors duration-200">
+
+    <div id="app" class="flex flex-col min-h-screen">
+        
+        <!-- TOP HEADER BAR -->
+        <header class="bg-white dark:bg-darkcard border-b border-gray-200 dark:border-darkborder sticky top-0 z-30 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-md">
+                        <i class="fa-solid fa-graduation-cap text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-900 dark:text-white leading-tight flex items-center gap-2">
+                            ANALISIS PRESTASI SPM
+                            <span id="header-year-badge" class="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">SPM 2026</span>
+                        </h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">SMK Kg. Dato' Seri Kamaruddin • <span id="header-student-count">0 Calon</span></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center flex-wrap gap-2 text-xs">
+                    <!-- SELEKSI TAHUN SPM -->
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 font-semibold text-emerald-800 dark:text-emerald-300">
+                        <i class="fa-solid fa-calendar-days text-emerald-600 dark:text-emerald-400"></i>
+                        <label for="year-select" class="text-xs font-bold">Tahun SPM:</label>
+                        <select id="year-select" onchange="changeYear(this.value)" class="bg-transparent text-xs font-bold text-emerald-900 dark:text-emerald-200 focus:outline-none cursor-pointer">
+                            <option value="2025" class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">2025</option>
+                            <option value="2026" selected class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">2026</option>
+                            <option value="2027" class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">2027</option>
+                            <option value="2028" class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">2028</option>
+                            <option value="2029" class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">2029</option>
+                            <option value="2030" class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">2030</option>
+                        </select>
+                    </div>
+
+                    <!-- SELEKSI FASA PEPERIKSAAN -->
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 font-semibold text-blue-800 dark:text-blue-300">
+                        <i class="fa-solid fa-layer-group text-blue-600 dark:text-blue-400"></i>
+                        <label for="exam-stage-select" class="text-xs font-bold">Fasa Peperiksaan:</label>
+                        <select id="exam-stage-select" onchange="changeExamStage(this.value)" class="bg-transparent text-xs font-bold text-blue-900 dark:text-blue-200 focus:outline-none cursor-pointer">
+                            <option value="PPT_F4" class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">Pertengahan Tahun Tingkatan 4</option>
+                            <option value="PAT_F4" class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">Akhir Tahun Tingkatan 4</option>
+                            <option value="PPT_F5" class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">Pertengahan Tahun Tingkatan 5</option>
+                            <option value="PPC_F5" selected class="bg-white dark:bg-slate-800 text-gray-900 dark:text-white">Percubaan SPM (Trial)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="openTargetModal()" class="px-3 py-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg font-bold transition flex items-center gap-1.5" title="Edit Sasaran GPS, LMS & Straight A">
+                        <i class="fa-solid fa-bullseye"></i> Edit Sasaran
+                    </button>
+
+                    <button onclick="toggleDarkMode()" class="p-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 rounded-lg transition" title="Tukar Mod Terang/Gelap">
+                        <i id="theme-icon" class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN TABS NAVIGATION -->
+        <nav class="bg-white dark:bg-darkcard border-b border-gray-200 dark:border-darkborder px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto flex space-x-1 sm:space-x-4 overflow-x-auto py-2" id="nav-tabs">
+                <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn active px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 whitespace-nowrap bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                    <i class="fa-solid fa-chart-pie"></i> Ringkasan Sekolah
+                </button>
+                <button onclick="switchTab('classes')" id="tab-classes" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 whitespace-nowrap text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-users"></i> Analisis Mengikut Kelas
+                </button>
+                <button onclick="switchTab('subjects')" id="tab-subjects" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 whitespace-nowrap text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-book"></i> GPMP Subjek
+                </button>
+                <button onclick="switchTab('comparison')" id="tab-comparison" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 whitespace-nowrap text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-chart-line text-blue-500"></i> Analisis Perbandingan Peperiksaan
+                </button>
+                <button onclick="switchTab('students')" id="tab-students" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 whitespace-nowrap text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-id-card"></i> Pengurusan Pelajar
+                </button>
+                <button onclick="switchTab('slips')" id="tab-slips" class="tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 whitespace-nowrap text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-print"></i> Slip Keputusan SPM
+                </button>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+            <!-- ================= VIEW 1: SCHOOL OVERVIEW ================= -->
+            <section id="view-overview" class="space-y-6">
+                <div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-3 flex flex-wrap items-center justify-between text-xs text-blue-900 dark:text-blue-300">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-blue-600"></i>
+                        <span>Paparan Semasa: Peperiksaan <strong id="active-stage-label">Percubaan SPM (Trial)</strong> Bagi Tahun SPM <strong class="year-display">2026</strong></span>
+                    </div>
+                    <span class="text-[11px] font-semibold opacity-80">Gunakan menu fasa di atas untuk menukar rekod paparan</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Gred Purata Sekolah (GPS)</span>
+                            <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline justify-between">
+                            <span id="kpi-gps" class="text-3xl font-extrabold text-gray-900 dark:text-white">0.00</span>
+                            <span id="kpi-gps-target-display" class="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-medium cursor-pointer" onclick="openTargetModal()">Sasaran: 5.20</span>
+                        </div>
+                        <p id="kpi-gps-sub" class="text-xs text-gray-500 dark:text-gray-400 mt-2">Dikira daripada calon terdaftar</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Layak Menerima Sijil (LMS)</span>
+                            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                <i class="fa-solid fa-certificate"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline justify-between">
+                            <span id="kpi-lms" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">0.00%</span>
+                            <span id="kpi-lms-target-display" class="text-xs px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-medium cursor-pointer" onclick="openTargetModal()">Sasaran: 100%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Syarat lulus Bahasa Melayu & Sejarah (<span id="kpi-lms-count">0 Calon</span>)</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Tidak Layak Sijil (TLS)</span>
+                            <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline justify-between">
+                            <span id="kpi-tls" class="text-3xl font-extrabold text-rose-600 dark:text-rose-400">0.00%</span>
+                            <span id="kpi-tls-target-display" class="text-xs px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 font-medium cursor-pointer" onclick="openTargetModal()">Sasaran: 0%</span>
+                        </div>
+                        <p class="text-xs text-rose-500 dark:text-rose-400 mt-2">Memerlukan intervensi BM / SEJ (<span id="kpi-tls-count">0 Calon</span>)</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Pencapaian Cemerlang</span>
+                            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                                <i class="fa-solid fa-award"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline justify-between">
+                            <span id="kpi-straight-a" class="text-3xl font-extrabold text-amber-500">0</span>
+                            <span id="kpi-straight-a-target-display" class="text-xs px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium cursor-pointer" onclick="openTargetModal()">Sasaran: 0</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Semua gred A+, A, A- tanpa sebarang B/C/D/E/G</p>
+                    </div>
+                </div>
+
+                <!-- OVERVIEW CHARTS -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar text-emerald-500"></i> Peratus Layak Sijil (LMS) Mengikut Kelas
+                        </h3>
+                        <div class="h-64 relative">
+                            <canvas id="chart-lms-class"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-blue-500"></i> Taburan Keseluruhan Gred SPM (Semua Subjek)
+                        </h3>
+                        <div class="h-64 relative">
+                            <canvas id="chart-grade-spread"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOP 20 PERFORMERS LEADERBOARD -->
+                <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-amber-500"></i> 20 Pelajar Terbaik Keseluruhan Sekolah (<span id="top-students-year-text">Percubaan SPM 2026</span>)
+                        </h3>
+                        <button onclick="switchTab('students')" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
+                            Lihat Semua Pelajar &rarr;
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-gray-50 dark:bg-slate-800/80 text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3 rounded-l-lg text-center">Kedudukan</th>
+                                    <th class="px-4 py-3">Nama Pelajar</th>
+                                    <th class="px-4 py-3 text-center">Kelas</th>
+                                    <th class="px-4 py-3 text-center">Gred Purata (GP)</th>
+                                    <th class="px-4 py-3 text-center">Peratus (%)</th>
+                                    <th class="px-4 py-3">Keputusan Ringkas</th>
+                                    <th class="px-4 py-3 rounded-r-lg text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-students-body" class="divide-y divide-gray-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 2: CLASS ANALYTICS ================= -->
+            <section id="view-classes" class="hidden space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-darkborder pb-3">
+                    <div class="flex items-center gap-2 overflow-x-auto" id="class-filter-pills"></div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button onclick="openTransferModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition">
+                            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                            <span>Pindah Kelas Pelajar</span>
+                        </button>
+                        <button id="btn-import-current-class" onclick="openImportModalForCurrentClass()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition">
+                            <i class="fa-solid fa-file-import"></i>
+                            <span>Import Fail / CSV Kelas (<span id="import-btn-class-label">5 SC</span>)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="class-summary-card" class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl p-6 shadow-md flex flex-wrap items-center justify-between gap-6">
+                    <div>
+                        <div class="text-xs font-semibold uppercase tracking-wider opacity-80">Analisis Kelas</div>
+                        <h2 id="class-title" class="text-2xl font-black mt-1">Kelas: 5 SC</h2>
+                        <p id="class-subtitle" class="text-xs opacity-90 mt-1">0 Calon</p>
+                    </div>
+                    <div class="flex items-center gap-6 text-center flex-wrap">
+                        <div>
+                            <span class="text-xs block opacity-80">Gred Purata Kelas (GP)</span>
+                            <span id="class-gp-val" class="text-3xl font-black">0.00</span>
+                        </div>
+                        <div class="h-10 w-px bg-white/20 hidden sm:block"></div>
+                        <div>
+                            <span class="text-xs block opacity-80">% Layak Sijil (LMS)</span>
+                            <span id="class-lms-val" class="text-3xl font-black">0.00%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CLASS SUBJECT BREAKDOWN TABLE -->
+                <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm">
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-500"></i> Analisis Subjek Kelas
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300 uppercase">
+                                <tr>
+                                    <th class="px-4 py-3 rounded-l-lg">Kod & Subjek</th>
+                                    <th class="px-4 py-3 text-center">Calon Didaftar</th>
+                                    <th class="px-4 py-3 text-center">GPMP Kelas</th>
+                                    <th class="px-4 py-3 text-center">% Lulus</th>
+                                    <th class="px-4 py-3 text-center">Bil. A (A+/A/A-)</th>
+                                    <th class="px-4 py-3 text-center rounded-r-lg">Gagal (G)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="class-subject-table-body" class="divide-y divide-gray-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CLASS STUDENT DETAILS TABLE -->
+                <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-users-viewfinder text-emerald-500"></i> Senarai & Detail Pelajar Kelas (<span id="class-student-list-label">5 SC</span>)
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Senarai perincian keputusan dan markah murid mengikut fasa peperiksaan pilihan</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="relative min-w-[200px]">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                <input type="text" id="class-student-search-input" onkeyup="renderClassAnalytics()" placeholder="Cari murid dalam kelas..." class="w-full pl-8 pr-3 py-1.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300 uppercase font-semibold">
+                                <tr>
+                                    <th class="px-3 py-3 rounded-l-lg text-center">Ked.</th>
+                                    <th class="px-4 py-3">Nama Murid</th>
+                                    <th class="px-3 py-3 text-center">Jantina</th>
+                                    <th class="px-3 py-3 text-center">Gred Purata (GP)</th>
+                                    <th class="px-3 py-3 text-center">% Purata</th>
+                                    <th class="px-4 py-3">Perincian Markah & Subjek</th>
+                                    <th class="px-3 py-3 text-center">Status</th>
+                                    <th class="px-4 py-3 rounded-r-lg text-center">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="class-student-table-body" class="divide-y divide-gray-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 3: SUBJECT GPMP ================= -->
+            <section id="view-subjects" class="hidden space-y-6">
+                <!-- CARD 1: SINGLE SUBJECT INSPECTOR -->
+                <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-book-open text-blue-500"></i> Analisis GPMP Mengikut Subjek
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <label for="subject-picker" class="text-xs font-semibold text-gray-600 dark:text-gray-300">Pilih Subjek:</label>
+                            <select id="subject-picker" onchange="renderSubjectDeepDive(this.value)" class="bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-xs rounded-xl p-2 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+                        </div>
+                    </div>
+
+                    <div class="h-64 relative mb-6">
+                        <canvas id="chart-subject-gpmp"></canvas>
+                    </div>
+
+                    <div id="subject-inspector-details" class="border-t border-gray-200 dark:border-darkborder pt-4"></div>
+                </div>
+
+                <!-- CARD 2: ANALISIS PERBANDINGAN KESELURUHAN SUBJEK -->
+                <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-darkborder pb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-simple text-emerald-500"></i> Analisis Perbandingan Keseluruhan Subjek (<span class="year-display">2026</span>)
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Perbandingan prestasi GPMP, % Lulus, dan Gred A merentasi subjek terdaftar sahaja</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="subject-highlights-container"></div>
+
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-blue-500"></i> Graf Perbandingan GPMP Keseluruhan Subjek
+                        </h4>
+                        <div class="h-72 relative bg-gray-50/50 dark:bg-slate-900/40 p-3 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <canvas id="chart-all-subjects-comparison"></canvas>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-table-list text-emerald-500"></i> Jadual Perbandingan Lengkap Mengikut Subjek
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-4 py-3 rounded-l-lg">Kod & Subjek</th>
+                                        <th class="px-3 py-3 text-center">Calon Didaftar</th>
+                                        <th class="px-3 py-3 text-center">GPMP Sekolah</th>
+                                        <th class="px-3 py-3 text-center">% Peratus Lulus</th>
+                                        <th class="px-3 py-3 text-center text-amber-600 dark:text-amber-400">Bilangan A (A+/A/A-)</th>
+                                        <th class="px-3 py-3 text-center text-rose-600 dark:text-rose-400">Gagal / TH</th>
+                                        <th class="px-4 py-3 text-center rounded-r-lg">Status & Analisis Prestasi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="all-subjects-comparison-tbody" class="divide-y divide-gray-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3: RUANG KOMEN INTERVENSI SUBJEK -->
+                <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-200 dark:border-darkborder pb-3">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-comments text-amber-500"></i> Ruang Komen Intervensi Subjek (<span id="intervention-sub-label">Bahasa Melayu</span>)
+                        </h3>
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Fasa: <strong id="intervention-stage-label" class="text-emerald-600 dark:text-emerald-400">Percubaan SPM</strong></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div>
+                            <label for="intervention-strength" class="block font-bold text-emerald-700 dark:text-emerald-400 mb-1.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-thumbs-up"></i> Kekuatan Subjek
+                            </label>
+                            <textarea id="intervention-strength" rows="5" placeholder="Tuliskan kekuatan murid atau tajuk yang dikuasai..." class="w-full p-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="intervention-weakness" class="block font-bold text-rose-600 dark:text-rose-400 mb-1.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-thumbs-down"></i> Kelemahan Subjek
+                            </label>
+                            <textarea id="intervention-weakness" rows="5" placeholder="Tuliskan kelemahan, isu umum, atau tajuk sukar..." class="w-full p-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="intervention-action" class="block font-bold text-blue-600 dark:text-blue-400 mb-1.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-lightbulb"></i> Cadangan Penambahbaikan / Intervensi
+                            </label>
+                            <textarea id="intervention-action" rows="5" placeholder="Tuliskan rancangan aksi, kelas bimbingan, atau modul khas..." class="w-full p-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button onclick="saveInterventionComments()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow transition">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Komen Intervensi ke Cloud
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 4: ANALISIS PERBANDINGAN PEPERIKSAAN ================= -->
+            <section id="view-comparison" class="hidden space-y-6">
+                <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 dark:border-darkborder pb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-blue-500"></i> Analisis Perbandingan Peperiksaan
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Perbandingan prestasi merentasi 6 Item: Data SPM 2025, PPT T4, PAT T4, PPT T5, Trial SPM 2026, dan ETR 2026</p>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button onclick="openImportModalForSpecialStage('SPM_2025')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+                                <i class="fa-solid fa-file-import"></i> Import CSV Data SPM 2025
+                            </button>
+                            <button onclick="openImportModalForSpecialStage('ETR_2026')" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+                                <i class="fa-solid fa-bullseye"></i> Import CSV Data ETR 2026
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- GRAF TREND PROGRESS (GPS & LMS) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-gray-50/50 dark:bg-slate-900/40 p-4 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <h4 class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-trend-down text-emerald-500"></i> Trend Gred Purata Sekolah (GPS) Merentasi Fasa (Rendah = Lebih Baik)
+                            </h4>
+                            <div class="h-64 relative">
+                                <canvas id="chart-comparison-gps"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50/50 dark:bg-slate-900/40 p-4 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <h4 class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-trend-up text-blue-500"></i> Trend Peratus Layak Menerima Sijil (% LMS)
+                            </h4>
+                            <div class="h-64 relative">
+                                <canvas id="chart-comparison-lms"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- JADUAL 1 & GRAF: PERBANDINGAN LMS & GPS SEKOLAH (6 ITEM) -->
+                    <div class="pt-2 space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <i class="fa-solid fa-award text-emerald-500"></i> Perbandingan Analisis Layak Mendapat Sijil (LMS) & GPS Sekolah (6 Item)
+                        </h4>
+                        
+                        <!-- GRAF BAHAGIAN 1 -->
+                        <div class="h-64 relative bg-gray-50/50 dark:bg-slate-900/40 p-3 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <canvas id="chart-comparison-lms-tls-bar"></canvas>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-semibold uppercase">
+                                    <tr>
+                                        <th class="px-4 py-3 rounded-l-lg">Item / Fasa Peperiksaan</th>
+                                        <th class="px-3 py-3 text-center">Bil. Calon</th>
+                                        <th class="px-3 py-3 text-center">GPS Sekolah</th>
+                                        <th class="px-3 py-3 text-center text-emerald-600 dark:text-emerald-400">Bil. Layak (LMS)</th>
+                                        <th class="px-3 py-3 text-center text-emerald-600 dark:text-emerald-400">% Layak (LMS)</th>
+                                        <th class="px-3 py-3 text-center text-rose-600 dark:text-rose-400">Bil. Tidak Layak (TLS)</th>
+                                        <th class="px-3 py-3 text-center text-rose-600 dark:text-rose-400">% TLS</th>
+                                        <th class="px-4 py-3 text-center rounded-r-lg text-amber-500">Pelajar Straight A</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-comparison-lms-gps" class="divide-y divide-gray-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- JADUAL 2 & GRAF: PERBANDINGAN LULUS/GAGAL SUBJEK BM & SEJARAH (6 ITEM) -->
+                    <div class="pt-2 space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <i class="fa-solid fa-book text-blue-500"></i> Perbandingan Data Lulus/Gagal Subjek Bahasa Melayu & Sejarah (6 Item)
+                        </h4>
+
+                        <!-- GRAF BAHAGIAN 2 -->
+                        <div class="h-64 relative bg-gray-50/50 dark:bg-slate-900/40 p-3 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <canvas id="chart-comparison-bm-sej-bar"></canvas>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-semibold uppercase">
+                                    <tr>
+                                        <th class="px-4 py-3 rounded-l-lg">Item / Fasa Peperiksaan</th>
+                                        <th class="px-3 py-3 text-center bg-blue-50/50 dark:bg-blue-950/30">BM % Lulus</th>
+                                        <th class="px-3 py-3 text-center bg-blue-50/50 dark:bg-blue-950/30">BM GPMP</th>
+                                        <th class="px-3 py-3 text-center bg-blue-50/50 dark:bg-blue-950/30 text-rose-500">BM Bil. Gagal</th>
+                                        <th class="px-3 py-3 text-center bg-amber-50/50 dark:bg-amber-950/30">SEJ % Lulus</th>
+                                        <th class="px-3 py-3 text-center bg-amber-50/50 dark:bg-amber-950/30">SEJ GPMP</th>
+                                        <th class="px-3 py-3 text-center bg-amber-50/50 dark:bg-amber-950/30 text-rose-500 rounded-r-lg">SEJ Bil. Gagal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-comparison-bm-sej" class="divide-y divide-gray-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- JADUAL 3 & GRAF: PERBANDINGAN PENCAPAIAN MENGIKUT SUBJEK BAGI SETIAP FASA (% LULUS & GPMP) -->
+                    <div class="pt-2 space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <i class="fa-solid fa-table-list text-purple-500"></i> Perbandingan Pencapaian Mengikut Subjek Bagi Setiap Fasa (% Lulus & GPMP)
+                        </h4>
+                        <p class="text-xs text-gray-500">* HANYA SUBJEK YANG DITAWARKAN / DIAMBIL OLEH MURID SEKOLAH DIPAPARKAN</p>
+                        
+                        <!-- GRAF BAHAGIAN 3 -->
+                        <div class="h-72 relative bg-gray-50/50 dark:bg-slate-900/40 p-3 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <canvas id="chart-comparison-subjects-gpmp-multi"></canvas>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border border-gray-100 dark:border-slate-800">
+                                <thead class="bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-semibold uppercase">
+                                    <tr>
+                                        <th class="px-4 py-3">Kod & Subjek</th>
+                                        <th class="px-2 py-3 text-center">SPM 2025 (%/GP)</th>
+                                        <th class="px-2 py-3 text-center">PPT T4 (%/GP)</th>
+                                        <th class="px-2 py-3 text-center">PAT T4 (%/GP)</th>
+                                        <th class="px-2 py-3 text-center">PPT T5 (%/GP)</th>
+                                        <th class="px-2 py-3 text-center bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">Trial SPM (%/GP)</th>
+                                        <th class="px-2 py-3 text-center bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300">ETR 2026 (%/GP)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-comparison-subjects-all" class="divide-y divide-gray-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- JADUAL 4 & GRAF: PERBANDINGAN ANALISIS GAGAL BAHASA MELAYU & SEJARAH (6 ITEM) -->
+                    <div class="pt-2 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Perbandingan Analisis Gagal Bahasa Melayu dan Sejarah (6 Item)
+                            </h4>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Analisis perbandingan bilangan dan peratus kegagalan BM & Sejarah merentasi 6 fasa</span>
+                        </div>
+
+                        <!-- GRAF BAHAGIAN 4 -->
+                        <div class="h-64 relative bg-gray-50/50 dark:bg-slate-900/40 p-3 rounded-xl border border-gray-100 dark:border-slate-800">
+                            <canvas id="chart-comparison-failed-bm-sej-bar"></canvas>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 font-semibold uppercase">
+                                    <tr>
+                                        <th class="px-4 py-3 rounded-l-lg">Item / Fasa Peperiksaan</th>
+                                        <th class="px-3 py-3 text-center">Bil. Calon</th>
+                                        <th class="px-3 py-3 text-center">Bil. Gagal BM</th>
+                                        <th class="px-3 py-3 text-center">% Gagal BM</th>
+                                        <th class="px-3 py-3 text-center">Bil. Gagal SEJ</th>
+                                        <th class="px-3 py-3 text-center">% Gagal SEJ</th>
+                                        <th class="px-3 py-3 text-center">Bil. Gagal Kedua-duanya</th>
+                                        <th class="px-4 py-3 text-center rounded-r-lg">% Tidak Layak Sijil (TLS)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-comparison-failed-bm-sej" class="divide-y divide-gray-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ================= VIEW 5: STUDENT DIRECTORY ================= -->
+            <section id="view-students" class="hidden space-y-6">
+                <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-2 flex-1 min-w-[240px]">
+                            <div class="relative w-full">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                <input type="text" id="student-search-input" onkeyup="renderStudentDirectory()" placeholder="Cari nama pelajar..." class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 flex-wrap text-xs">
+                            <select id="student-class-filter" onchange="renderStudentDirectory()" class="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 font-medium"></select>
+
+                            <select id="student-lms-filter" onchange="renderStudentDirectory()" class="bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 font-medium">
+                                <option value="ALL">Semua Status LMS</option>
+                                <option value="LMS">Layak Sijil (LMS)</option>
+                                <option value="TLS">Tidak Layak (TLS)</option>
+                            </select>
+
+                            <button onclick="openTransferModal()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-arrow-right-arrow-left"></i> Pindah Kelas
+                            </button>
+
+                            <button onclick="promptBulkDelete()" id="btn-bulk-delete" class="hidden px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-trash"></i> Padam Terpilih (<span id="bulk-delete-count">0</span>)
+                            </button>
+
+                            <button onclick="openAddStudentModal()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-user-plus"></i> Tambah Pelajar Baru
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-gray-50 dark:bg-slate-800/80 text-gray-600 dark:text-gray-300 font-semibold uppercase">
+                                <tr>
+                                    <th class="px-4 py-3 rounded-l-lg text-center">
+                                        <input type="checkbox" id="select-all-students" onclick="toggleSelectAllStudents(this)" class="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                    </th>
+                                    <th class="px-4 py-3">Nama Pelajar</th>
+                                    <th class="px-4 py-3">Kelas</th>
+                                    <th class="px-4 py-3 text-center">Jantina</th>
+                                    <th class="px-4 py-3 text-center">Gred Purata (GP)</th>
+                                    <th class="px-4 py-3 text-center">% Markah Purata</th>
+                                    <th class="px-4 py-3 text-center">Status LMS</th>
+                                    <th class="px-4 py-3 rounded-r-lg text-center">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="student-directory-body" class="divide-y divide-gray-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 6: PRINTABLE SLIPS ================= -->
+            <section id="view-slips" class="hidden space-y-6">
+                <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 shadow-sm no-print space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3 flex-1 min-w-[280px]">
+                            <div class="relative w-full">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                <input type="text" id="slip-search-input" onkeyup="filterSlipStudentDropdown()" placeholder="Cari nama murid untuk slip..." class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 flex-1 min-w-[260px]">
+                            <label for="slip-student-select" class="text-xs font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">Pilih Murid:</label>
+                            <select id="slip-student-select" onchange="renderStudentResultSlip(this.value)" class="w-full bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-xs rounded-xl p-2 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+                        </div>
+
+                        <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow transition">
+                            <i class="fa-solid fa-print"></i> Cetak Slip Keputusan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PRINTABLE SLIP AREA -->
+                <div id="printable-slip-area" class="bg-white text-gray-900 border border-gray-200 rounded-2xl p-8 shadow-md max-w-4xl mx-auto space-y-6">
+                    <!-- Dynamic Slip Content Generated via JS -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL 1: ADD / EDIT STUDENT -->
+    <div id="modal-student" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl max-w-2xl w-full p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-gray-200 dark:border-darkborder pb-3">
+                <div>
+                    <h3 id="modal-student-title" class="text-base font-bold text-gray-900 dark:text-white">Tambah Pelajar Baru</h3>
+                    <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-0.5">Memasukkan markah bagi fasa: <span id="modal-stage-indicator" class="font-bold">Percubaan SPM</span></p>
+                </div>
+                <button onclick="closeStudentModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="form-student" onsubmit="handleSaveStudent(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="student-edit-id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Nama Penuh Pelajar</label>
+                        <input type="text" id="input-student-name" required placeholder="Contoh: AHMAD BIN ABDULLAH" class="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Kelas Fasa Ini</label>
+                        <select id="input-student-class" required class="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Jantina</label>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="input-student-gender" value="L" checked class="text-emerald-600 focus:ring-emerald-500"> Lelaki
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="input-student-gender" value="P" class="text-emerald-600 focus:ring-emerald-500"> Perempuan
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-2 border-b border-gray-200 dark:border-darkborder pb-1">Markah & Gred Subjek SPM (<span id="form-stage-label">Percubaan SPM</span>)</h4>
+                    <div id="subject-inputs-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1"></div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-darkborder">
+                    <button type="button" onclick="closeStudentModal()" class="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-xl font-bold">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold">Simpan Rekod Fasa Ini</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: IMPORT CSV -->
+    <div id="modal-import" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl max-w-xl w-full p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-200 dark:border-darkborder pb-3">
+                <div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Import Data Pelajar / Subjek (CSV / Salin Teks)</h3>
+                    <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-0.5">Memasukkan ke fasa: <span id="import-stage-indicator" class="font-bold">Percubaan SPM</span></p>
+                </div>
+                <button onclick="closeImportModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div class="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 rounded-xl leading-relaxed">
+                    <strong>Format Disokong:</strong><br>
+                    1. <strong>Import Pelajar:</strong> Lajur <code>NAMA</code>, <code>KELAS</code>, <code>JANTINA</code>, dan kod subjek (<code>BM</code>, <code>BI</code>, <code>SEJ</code>, <code>MAT</code>, dll.).<br>
+                    2. <strong>Import Data Subjek (SPM 2025 / ETR 2026):</strong> Format perbandingan subjek:<br>
+                    <code class="text-emerald-600 dark:text-emerald-400 font-mono">MATA PELAJARAN,JUMLAH CALON,CALON HADIR,A+,A,A-,B+,B,C+,C,D,E,G,TH</code>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Muat Naik Fail CSV:</label>
+                    <input type="file" id="import-csv-file" accept=".csv, .txt" onchange="handleFileSelect(event)" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-500/10 file:text-emerald-600 hover:file:bg-emerald-500/20 cursor-pointer">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Atau Tampal Teks CSV / Tab-Delimited:</label>
+                    <textarea id="import-csv-text" rows="6" placeholder="MATA PELAJARAN,JUMLAH CALON,CALON HADIR,A+,A,A-,B+,B,C+,C,D,E,G,TH&#10;BAHASA MELAYU,120,118,15,20,25,18,12,10,8,5,3,2,0&#10;SEJARAH,120,117,10,15,20,22,15,12,10,8,3,2,0" class="w-full p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-darkborder text-xs">
+                <button onclick="closeImportModal()" class="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-xl font-bold">Batal</button>
+                <button onclick="processCSVImport()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold">Proses Import Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: PINDAH KELAS PELAJAR -->
+    <div id="modal-transfer" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-200 dark:border-darkborder pb-3">
+                <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-right-arrow-left text-blue-500"></i> Perpindahan Pelajar / Tukar Kelas
+                </h3>
+                <button onclick="closeTransferModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleTransferStudent(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Pilih Pelajar:</label>
+                    <select id="transfer-student-select" required class="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"></select>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Fasa Peperiksaan Bertukar:</label>
+                    <select id="transfer-stage-select" required class="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold">
+                        <option value="PPT_F4">Pertengahan Tahun Tingkatan 4</option>
+                        <option value="PAT_F4">Akhir Tahun Tingkatan 4</option>
+                        <option value="PPT_F5">Pertengahan Tahun Tingkatan 5</option>
+                        <option value="PPC_F5" selected>Percubaan SPM (Trial)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Pindah ke Kelas Baharu:</label>
+                    <select id="transfer-target-class" required class="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold"></select>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-darkborder">
+                    <button type="button" onclick="closeTransferModal()" class="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-xl font-bold">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold">Kemaskini Kelas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: EDIT SASARAN / KPI -->
+    <div id="modal-target" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-200 dark:border-darkborder pb-3">
+                <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye text-amber-500"></i> Edit Sasaran Prestasi
+                </h3>
+                <button onclick="closeTargetModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleSaveTargets(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Sasaran Gred Purata Sekolah (GPS):</label>
+                    <input type="number" step="0.01" id="input-target-gps" required class="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Sasaran Layak Sijil (% LMS):</label>
+                    <input type="number" step="0.1" min="0" max="100" id="input-target-lms" required class="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Sasaran Tidak Layak Sijil (% TLS):</label>
+                    <input type="number" step="0.1" min="0" max="100" id="input-target-tls" required class="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Sasaran Pelajar Straight A (Bil. Calon):</label>
+                    <input type="number" step="1" min="0" id="input-target-straight-a" required class="w-full p-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-200 dark:border-darkborder">
+                    <button type="button" onclick="closeTargetModal()" class="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-xl font-bold">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold">Simpan Sasaran ke Cloud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: CONFIRM DELETE -->
+    <div id="modal-confirm" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4 text-center">
+            <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirm-modal-title" class="text-base font-bold text-gray-900 dark:text-white">Pengesahan Padam</h3>
+            <p id="confirm-modal-msg" class="text-xs text-gray-500 dark:text-gray-400">Adakah anda pasti untuk memadamkan rekod ini?</p>
+            <div class="flex justify-center gap-2 pt-2 text-xs">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-xl font-bold">Batal</button>
+                <button onclick="executeDeleteStudents()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold">Ya, Padam</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        // DAFTAR PLUGIN DATALABELS PADA CHART.JS
+        if (typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+            Chart.defaults.set('plugins.datalabels', {
+                color: function(context) {
+                    if (context.chart.config.type === 'doughnut') {
+                        return '#ffffff';
+                    }
+                    return document.documentElement.classList.contains('dark') ? '#f1f5f9' : '#0f172a';
+                },
+                font: {
+                    weight: 'bold',
+                    size: 10
+                }
+            });
+        }
+
+        // CONFIG & CONSTANTS
+        const EXAM_STAGES = {
+            'SPM_2025': 'Data SPM 2025',
+            'PPT_F4': 'Pertengahan Tahun Tingkatan 4',
+            'PAT_F4': 'Akhir Tahun Tingkatan 4',
+            'PPT_F5': 'Pertengahan Tahun Tingkatan 5',
+            'PPC_F5': 'Percubaan SPM (Trial)',
+            'ETR_2026': 'Target ETR 2026'
+        };
+
+        const GRADE_POINTS = {
+            'A+': 0, 'A': 1, 'A-': 2, 'B+': 3, 'B': 4,
+            'C+': 5, 'C': 6, 'D': 7, 'E': 8, 'G': 9, 'TH': 9
+        };
+
+        const SUBJECTS_CONFIG = {
+            'BM': { name: 'Bahasa Melayu', code: '1103' },
+            'BI': { name: 'Bahasa Inggeris', code: '1119' },
+            'SEJ': { name: 'Sejarah', code: '1249' },
+            'MAT': { name: 'Matematik', code: '1449' },
+            'SN': { name: 'Sains', code: '1511' },
+            'PI': { name: 'Pendidikan Islam', code: '1223' },
+            'PM': { name: 'Pendidikan Moral', code: '1225' },
+            'MT': { name: 'Matematik Tambahan', code: '3472' },
+            'FIZ': { name: 'Fizik', code: '4531' },
+            'KIM': { name: 'Kimia', code: '4541' },
+            'BIO': { name: 'Biologi', code: '4551' },
+            'PA': { name: 'Prinsip Perakaunan', code: '3756' },
+            'EKO': { name: 'Ekonomi', code: '3763' },
+            'PNG': { name: 'Perniagaan', code: '3766' },
+            'PSV': { name: 'Pendidikan Seni Visual', code: '2611' },
+            'GEO': { name: 'Geografi', code: '1281' },
+            'SKOM': { name: 'Sains Komputer', code: '3770' },
+            'RC': { name: 'Reka Cipta', code: '3762' },
+            'SRT': { name: 'Sains Rumah Tangga', code: '3769' },
+            'PRT': { name: 'Pertanian', code: '3729' },
+            'TI': { name: 'Tasawwur Islam', code: '5226' },
+            'BC': { name: 'Bahasa Cina', code: '6351' },
+            'BT': { name: 'Bahasa Tamil', code: '6354' }
+        };
+
+        function getActiveClasses() {
+            if (currentExamStage.includes('F4')) {
+                return ['4 SC', '4 VT', '4 K1', '4 K2', '4 PSV'];
+            }
+            return ['5 SC', '5 VT', '5 K1', '5 K2', '5 PSV'];
+        }
+
+        // GLOBAL APP STATE
+        let yearlyDataStore = {};
+        let interventionDataStore = {};
+        let subjectSummaryStore = {};
+        let currentYear = '2026';
+        let currentExamStage = 'PPC_F5';
+        let importTargetStage = 'PPC_F5';
+        let studentsData = [];
+        let currentClassFilter = '5 SC';
+        let selectedSubjectKey = 'BM';
+        let selectedStudentsForDelete = [];
+        let currentlyDisplayedStudentIds = [];
+        let targetImportClass = null;
+        let deleteTargetId = null;
+
+        // FIRESTORE UN-LISTENERS
+        let unsubs = [];
+
+        // TARGETS / KPIS (SAVED ON CLOUD)
+        let targetGps = 5.20;
+        let targetLms = 100.0;
+        let targetTls = 0.0;
+        let targetStraightA = 0;
+
+        // CHART INSTANCES
+        let chartLmsClass = null;
+        let chartGradeSpread = null;
+        let chartSubjectGpmp = null;
+        let chartAllSubjectsComparison = null;
+        let chartCompGps = null;
+        let chartCompLms = null;
+        let chartCompLmsTls = null;
+        let chartCompBmSej = null;
+        let chartCompSubMulti = null;
+        let chartCompFailedBmSej = null;
+
+        // TOAST NOTIFICATIONS
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            let bg = 'bg-slate-800 text-white border-slate-700';
+            if (type === 'success') bg = 'bg-emerald-600 text-white border-emerald-500';
+            if (type === 'error') bg = 'bg-rose-600 text-white border-rose-500';
+
+            toast.className = `p-3 px-4 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-2 transition duration-300 opacity-0 transform translate-y-2 pointer-events-auto ${bg}`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-xmark' : 'fa-circle-info'}"></i> <span>${msg}</span>`;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // KEMAS KINI STRUKTUR DROPDOWN KELAS
+        function updateClassSelectOptions() {
+            const classes = getActiveClasses();
+            if (!classes.includes(currentClassFilter)) {
+                currentClassFilter = classes[0];
+            }
+
+            const inputClass = document.getElementById('input-student-class');
+            if (inputClass) {
+                inputClass.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+
+            const studentFilter = document.getElementById('student-class-filter');
+            if (studentFilter) {
+                studentFilter.innerHTML = `<option value="ALL">Semua Kelas</option>` + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+
+            const transferClass = document.getElementById('transfer-target-class');
+            if (transferClass) {
+                transferClass.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+        }
+
+        function getStudentExamData(student, stageKey = currentExamStage) {
+            if (student.exams && student.exams[stageKey]) {
+                return student.exams[stageKey];
+            }
+            if (stageKey === 'PPC_F5' && student.grades) {
+                return { class: student.class, grades: student.grades || {}, marks: student.marks || {} };
+            }
+            return { class: student.class, grades: {}, marks: {} };
+        }
+
+        function getStudentClassForStage(student, stageKey = currentExamStage) {
+            const ex = getStudentExamData(student, stageKey);
+            return ex.class || student.class || '5 SC';
+        }
+
+        // TAB SWITCHING
+        function switchTab(tabId) {
+            document.querySelectorAll('section[id^="view-"]').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 whitespace-nowrap text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800';
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = 'tab-btn active px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 whitespace-nowrap bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30';
+            }
+
+            if (tabId === 'comparison') {
+                renderComparisonView();
+            } else if (tabId === 'slips') {
+                populateSlipStudentPicker();
+            } else if (tabId === 'subjects') {
+                renderSubjectDeepDive(selectedSubjectKey);
+                loadInterventionComments();
+            }
+        }
+
+        function changeExamStage(newStage) {
+            currentExamStage = newStage;
+            importTargetStage = newStage;
+            const label = EXAM_STAGES[currentExamStage] || currentExamStage;
+            
+            const activeLabel = document.getElementById('active-stage-label');
+            if (activeLabel) activeLabel.textContent = label;
+            
+            updateClassSelectOptions();
+            calculateAndRender();
+            loadInterventionComments();
+            showToast(`Tukar ke Fasa: ${label}`, 'info');
+        }
+
+        function changeYear(newYear) {
+            currentYear = newYear;
+
+            document.querySelectorAll('.year-display').forEach(el => el.textContent = currentYear);
+            const headerBadge = document.getElementById('header-year-badge');
+            if (headerBadge) headerBadge.textContent = `SPM ${currentYear}`;
+            const topYearText = document.getElementById('top-students-year-text');
+            if (topYearText) topYearText.textContent = `${EXAM_STAGES[currentExamStage]} ${currentYear}`;
+
+            setupFirestoreListeners(currentYear);
+            calculateAndRender();
+            loadInterventionComments();
+            showToast(`Tukar ke Rekod Tahun SPM ${currentYear}`, 'info');
+        }
+
+        // FIRESTORE REAL-TIME SYNC
+        function setupFirestoreListeners(year) {
+            unsubs.forEach(un => un());
+            unsubs = [];
+
+            if (!window.db) return;
+
+            // 1. Listen to Students Data
+            try {
+                const colRef = window.fsCollection(window.db, `students_${year}`);
+                const un1 = window.fsOnSnapshot(colRef, (snapshot) => {
+                    const docs = [];
+                    snapshot.forEach(doc => docs.push(doc.data()));
+                    yearlyDataStore[year] = docs;
+                    if (currentYear === year) {
+                        studentsData = docs;
+                        calculateAndRender();
+                    }
+                });
+                unsubs.push(un1);
+            } catch(e) { console.error("Firestore students sync error", e); }
+
+            // 2. Listen to Settings / Targets KPI
+            try {
+                const targetDocRef = window.fsDoc(window.db, `settings_${year}`, 'targets');
+                const un2 = window.fsOnSnapshot(targetDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.targetGps !== undefined) targetGps = parseFloat(data.targetGps);
+                        if (data.targetLms !== undefined) targetLms = parseFloat(data.targetLms);
+                        if (data.targetTls !== undefined) targetTls = parseFloat(data.targetTls);
+                        if (data.targetStraightA !== undefined) targetStraightA = parseInt(data.targetStraightA);
+                        
+                        document.getElementById('kpi-gps-target-display').textContent = `Sasaran: ${targetGps.toFixed(2)}`;
+                        document.getElementById('kpi-lms-target-display').textContent = `Sasaran: ${targetLms.toFixed(1)}%`;
+                        document.getElementById('kpi-tls-target-display').textContent = `Sasaran: ${targetTls.toFixed(1)}%`;
+                        document.getElementById('kpi-straight-a-target-display').textContent = `Sasaran: ${targetStraightA}`;
+                    }
+                });
+                unsubs.push(un2);
+            } catch(e) { console.error("Firestore targets sync error", e); }
+
+            // 3. Listen to Intervention Comments
+            try {
+                const interColRef = window.fsCollection(window.db, `interventions_${year}`);
+                const un3 = window.fsOnSnapshot(interColRef, (snapshot) => {
+                    if (!interventionDataStore[year]) interventionDataStore[year] = {};
+                    snapshot.forEach(doc => {
+                        interventionDataStore[year][doc.id] = doc.data();
+                    });
+                    loadInterventionComments();
+                });
+                unsubs.push(un3);
+            } catch(e) { console.error("Firestore intervention sync error", e); }
+
+            // 4. Listen to Subject Summary Imports (SPM 2025 / ETR 2026)
+            try {
+                const subSummaryColRef = window.fsCollection(window.db, `subject_summaries_${year}`);
+                const un4 = window.fsOnSnapshot(subSummaryColRef, (snapshot) => {
+                    if (!subjectSummaryStore[year]) subjectSummaryStore[year] = {};
+                    snapshot.forEach(doc => {
+                        subjectSummaryStore[year][doc.id] = doc.data();
+                    });
+                    if (!document.getElementById('view-comparison').classList.contains('hidden')) {
+                        renderComparisonView();
+                    }
+                });
+                unsubs.push(un4);
+            } catch(e) { console.error("Firestore subject summaries sync error", e); }
+        }
+
+        // SAVE INTERVENTION COMMENTS TO CLOUD
+        function saveInterventionComments() {
+            const strength = document.getElementById('intervention-strength').value.trim();
+            const weakness = document.getElementById('intervention-weakness').value.trim();
+            const action = document.getElementById('intervention-action').value.trim();
+
+            const docId = `${currentExamStage}_${selectedSubjectKey}`;
+            const dataToSave = {
+                stage: currentExamStage,
+                subject: selectedSubjectKey,
+                strength,
+                weakness,
+                action,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!interventionDataStore[currentYear]) interventionDataStore[currentYear] = {};
+            interventionDataStore[currentYear][docId] = dataToSave;
+
+            if (window.db) {
+                window.fsSetDoc(window.fsDoc(window.db, `interventions_${currentYear}`, docId), dataToSave)
+                    .then(() => showToast(`Intervensi subjek disimpan ke Cloud!`, 'success'))
+                    .catch(err => {
+                        console.error(err);
+                        showToast(`Gagal menyimpan ke cloud!`, 'error');
+                    });
+            } else {
+                showToast(`Disimpan secara tempatan.`, 'info');
+            }
+        }
+
+        function loadInterventionComments() {
+            const docId = `${currentExamStage}_${selectedSubjectKey}`;
+            const store = interventionDataStore[currentYear] && interventionDataStore[currentYear][docId];
+
+            document.getElementById('intervention-strength').value = store ? (store.strength || '') : '';
+            document.getElementById('intervention-weakness').value = store ? (store.weakness || '') : '';
+            document.getElementById('intervention-action').value = store ? (store.action || '') : '';
+
+            const subName = SUBJECTS_CONFIG[selectedSubjectKey] ? SUBJECTS_CONFIG[selectedSubjectKey].name : selectedSubjectKey;
+            document.getElementById('intervention-sub-label').textContent = subName;
+            document.getElementById('intervention-stage-label').textContent = EXAM_STAGES[currentExamStage] || currentExamStage;
+        }
+
+        // TARGET KPI CLOUD HANDLER
+        function openTargetModal() {
+            document.getElementById('input-target-gps').value = targetGps;
+            document.getElementById('input-target-lms').value = targetLms;
+            document.getElementById('input-target-tls').value = targetTls;
+            document.getElementById('input-target-straight-a').value = targetStraightA;
+            document.getElementById('modal-target').classList.remove('hidden');
+        }
+
+        function closeTargetModal() {
+            document.getElementById('modal-target').classList.add('hidden');
+        }
+
+        function handleSaveTargets(e) {
+            e.preventDefault();
+            targetGps = parseFloat(document.getElementById('input-target-gps').value);
+            targetLms = parseFloat(document.getElementById('input-target-lms').value);
+            targetTls = parseFloat(document.getElementById('input-target-tls').value);
+            targetStraightA = parseInt(document.getElementById('input-target-straight-a').value) || 0;
+
+            const targetData = { targetGps, targetLms, targetTls, targetStraightA, updatedAt: new Date().toISOString() };
+
+            if (window.db) {
+                window.fsSetDoc(window.fsDoc(window.db, `settings_${currentYear}`, 'targets'), targetData)
+                    .then(() => showToast(`Sasaran KPI disimpan pada Cloud!`, 'success'))
+                    .catch(e => console.error(e));
+            }
+
+            closeTargetModal();
+            renderOverview();
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-sun';
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-moon';
+            }
+        }
+
+        // CSV PARSING LOGIC
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if ((char === ',' || char === ';' || char === '\t') && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+
+            return result.map(str => {
+                let cleaned = str.trim();
+                if (cleaned.startsWith('"') && cleaned.endsWith('"') && cleaned.length >= 2) {
+                    cleaned = cleaned.slice(1, -1).trim();
+                }
+                return cleaned;
+            });
+        }
+
+        function getGradeFromMark(val) {
+            if (val === null || val === undefined) return null;
+            const strVal = String(val).trim().toUpperCase();
+            if (strVal === '' || strVal === '-' || strVal === 'TIADA' || strVal === 'N/A') return null;
+
+            if (['TH', 'T.H', 'T/H', 'ABS', 'ABSENT'].includes(strVal)) return 'TH';
+
+            if (['A+', 'A', 'A-', 'B+', 'B', 'C+', 'C', 'D', 'E', 'G'].includes(strVal)) {
+                return strVal;
+            }
+
+            const num = parseFloat(strVal);
+            if (isNaN(num)) return null;
+
+            if (num >= 90) return 'A+';
+            if (num >= 80) return 'A';
+            if (num >= 70) return 'A-';
+            if (num >= 65) return 'B+';
+            if (num >= 60) return 'B';
+            if (num >= 55) return 'C+';
+            if (num >= 50) return 'C';
+            if (num >= 45) return 'D';
+            if (num >= 40) return 'E';
+            return 'G';
+        }
+
+        function findSubjectKeyFromHeader(headerStr) {
+            if (!headerStr) return null;
+            const clean = headerStr.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+            for (const [key, conf] of Object.entries(SUBJECTS_CONFIG)) {
+                const keyClean = key.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                const codeClean = conf.code.replace(/[^A-Z0-9]/g, '');
+                const nameClean = conf.name.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+                if (clean === keyClean || clean === codeClean || clean === nameClean) {
+                    return key;
+                }
+            }
+
+            const aliases = {
+                'BAHASAMELAYU': 'BM', 'BMELAYU': 'BM', 'MALAY': 'BM',
+                'BAHASAINGGERIS': 'BI', 'BINGGERIS': 'BI', 'ENGLISH': 'BI',
+                'SEJARAH': 'SEJ', 'HISTORY': 'SEJ',
+                'MATEMATIK': 'MAT', 'MATH': 'MAT', 'MM': 'MAT',
+                'SAINS': 'SN', 'SCIENCE': 'SN',
+                'PENDIDIKANISLAM': 'PI', 'PISLAM': 'PI',
+                'PENDIDIKANMORAL': 'PM', 'PMORAL': 'PM',
+                'MATEMATIKTAMBAHAN': 'MT', 'ADDMATH': 'MT',
+                'FIZIK': 'FIZ', 'KIMIA': 'KIM', 'BIOLOGI': 'BIO',
+                'PRINSIPPERAKAUNAN': 'PA', 'AKAUN': 'PA',
+                'EKONOMI': 'EKO', 'PERNIAGAAN': 'PNG', 'PENDIDIKANSENIVISUAL': 'PSV',
+                'GEOGRAFI': 'GEO', 'SAINSKOMPUTER': 'SKOM',
+                'REKACIPTA': 'RC', 'SAINSRUMAHTANGGA': 'SRT', 'PERTANIAN': 'PRT',
+                'TASAWWURISLAM': 'TI', 'BAHASACINA': 'BC', 'BAHASATAMIL': 'BT'
+            };
+
+            return aliases[clean] || null;
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('import-csv-text').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        // PROCESS CSV IMPORT FOR BOTH STUDENTS & SUBJECT SUMMARY
+        function processCSVImport() {
+            const rawText = document.getElementById('import-csv-text').value.trim();
+            if (!rawText) {
+                showToast("Sila masukkan teks CSV atau pilih fail terlebih dahulu.", "error");
+                return;
+            }
+
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) return;
+
+            const parsedLines = lines.map(line => parseCSVLine(line));
+            const headerCols = parsedLines[0].map(c => c.toUpperCase());
+
+            const targetStage = importTargetStage || currentExamStage;
+
+            // DETECT IF FORMAT IS SUBJECT SUMMARY
+            const isSubjectSummaryFormat = headerCols.includes('MATA PELAJARAN') || headerCols.includes('JUMLAH CALON') || (headerCols.includes('A+') && headerCols.includes('TH'));
+
+            if (isSubjectSummaryFormat) {
+                let count = 0;
+                for (let i = 1; i < parsedLines.length; i++) {
+                    const row = parsedLines[i];
+                    if (!row || row.length < 5) continue;
+
+                    const subName = row[0];
+                    const subKey = findSubjectKeyFromHeader(subName);
+                    if (!subKey) continue;
+
+                    const totalCalon = parseInt(row[1]) || 0;
+                    const calonHadir = parseInt(row[2]) || totalCalon;
+                    const ap = parseInt(row[3]) || 0;
+                    const a = parseInt(row[4]) || 0;
+                    const am = parseInt(row[5]) || 0;
+                    const bp = parseInt(row[6]) || 0;
+                    const b = parseInt(row[7]) || 0;
+                    const cp = parseInt(row[8]) || 0;
+                    const c = parseInt(row[9]) || 0;
+                    const d = parseInt(row[10]) || 0;
+                    const e = parseInt(row[11]) || 0;
+                    const g = parseInt(row[12]) || 0;
+                    const th = parseInt(row[13]) || 0;
+
+                    const passes = ap + a + am + bp + b + cp + c + d + e;
+                    const fails = g + th;
+                    const totalPoints = (ap * 0) + (a * 1) + (am * 2) + (bp * 3) + (b * 4) + (cp * 5) + (c * 6) + (d * 7) + (e * 8) + (g * 9) + (th * 9);
+                    const gpmp = calonHadir > 0 ? (totalPoints / calonHadir) : 0;
+                    const passPct = calonHadir > 0 ? ((passes / calonHadir) * 100) : 0;
+
+                    const summaryObj = {
+                        stage: targetStage,
+                        subject: subKey,
+                        totalCalon,
+                        calonHadir,
+                        ap, a, am, bp, b, cp, c, d, e, g, th,
+                        passes, fails, totalPoints, gpmp, passPct
+                    };
+
+                    const docId = `${targetStage}_${subKey}`;
+                    if (!subjectSummaryStore[currentYear]) subjectSummaryStore[currentYear] = {};
+                    subjectSummaryStore[currentYear][docId] = summaryObj;
+
+                    if (window.db) {
+                        window.fsSetDoc(window.fsDoc(window.db, `subject_summaries_${currentYear}`, docId), summaryObj);
+                    }
+                    count++;
+                }
+
+                closeImportModal();
+                renderComparisonView();
+                showToast(`Berjaya import ${count} rekod ringkasan subjek ke Cloud untuk ${EXAM_STAGES[targetStage]}!`, 'success');
+                return;
+            }
+
+            // REGULAR STUDENT CSV IMPORT
+            let hasHeader = false;
+            let colMap = {};
+
+            const nameKeywords = ['NAMA', 'NAMA PELAJAR', 'NAMA MURID', 'NAME'];
+            const classKeywords = ['KELAS', 'CLASS'];
+            const genderKeywords = ['JANTINA', 'GENDER', 'SEX', 'J'];
+
+            headerCols.forEach((colStr, idx) => {
+                const clean = colStr.trim();
+                if (nameKeywords.includes(clean)) {
+                    hasHeader = true; colMap[idx] = 'NAMA';
+                } else if (classKeywords.includes(clean)) {
+                    hasHeader = true; colMap[idx] = 'KELAS';
+                } else if (genderKeywords.includes(clean)) {
+                    hasHeader = true; colMap[idx] = 'JANTINA';
+                } else {
+                    const subKey = findSubjectKeyFromHeader(clean);
+                    if (subKey) {
+                        hasHeader = true; colMap[idx] = subKey;
+                    }
+                }
+            });
+
+            const startRowIdx = hasHeader ? 1 : 0;
+            let importedCount = 0;
+            const activeClasses = getActiveClasses();
+
+            for (let i = startRowIdx; i < parsedLines.length; i++) {
+                const cols = parsedLines[i];
+                if (!cols || cols.length === 0) continue;
+
+                let name = '';
+                let cls = targetImportClass || currentClassFilter || activeClasses[0];
+                let gender = 'L';
+                let grades = {};
+                let marks = {};
+
+                if (hasHeader) {
+                    cols.forEach((val, idx) => {
+                        const target = colMap[idx];
+                        if (!target) return;
+
+                        if (target === 'NAMA') name = val.toUpperCase().trim();
+                        else if (target === 'KELAS' && val.trim()) cls = val.toUpperCase().trim();
+                        else if (target === 'JANTINA') {
+                            const gClean = val.toUpperCase().trim();
+                            gender = (gClean.startsWith('P') || gClean === 'PEREMPUAN') ? 'P' : 'L';
+                        } else if (SUBJECTS_CONFIG[target]) {
+                            const g = getGradeFromMark(val);
+                            if (g !== null) {
+                                grades[target] = g;
+                                const num = parseFloat(val);
+                                if (!isNaN(num)) marks[target] = num;
+                            }
+                        }
+                    });
+                }
+
+                if (!name) name = `PELAJAR ${i + 1}`;
+                if (Object.keys(grades).length === 0) continue;
+
+                let student = studentsData.find(s => s.name === name);
+                if (!student) {
+                    const id = 'STU_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                    student = { id, name, class: cls, gender, exams: {} };
+                    studentsData.push(student);
+                }
+
+                if (!student.exams) student.exams = {};
+                student.exams[targetStage] = { class: cls, grades, marks };
+
+                if (window.db) {
+                    window.fsSetDoc(window.fsDoc(window.db, `students_${currentYear}`, student.id), student);
+                }
+                importedCount++;
+            }
+
+            closeImportModal();
+            calculateAndRender();
+            showToast(`Berjaya import ${importedCount} rekod pelajar untuk ${EXAM_STAGES[targetStage]}!`, 'success');
+        }
+
+        // STATS CALCULATIONS
+        function calculateStudentStats(student, stageKey = currentExamStage) {
+            let totalPoints = 0;
+            let subjectCount = 0;
+            let totalA = 0;
+            let totalMarks = 0;
+            let marksCount = 0;
+
+            const examData = getStudentExamData(student, stageKey);
+            const grades = examData.grades || {};
+            const marks = examData.marks || {};
+
+            let isStraightA = Object.keys(grades).length > 0;
+
+            Object.values(grades).forEach(grade => {
+                if (GRADE_POINTS[grade] !== undefined) {
+                    totalPoints += GRADE_POINTS[grade];
+                    subjectCount++;
+                    if (['A+', 'A', 'A-'].includes(grade)) {
+                        totalA++;
+                    } else {
+                        isStraightA = false;
+                    }
+                }
+            });
+
+            Object.values(marks).forEach(mark => {
+                if (!isNaN(mark)) {
+                    totalMarks += mark;
+                    marksCount++;
+                }
+            });
+
+            const gp = subjectCount > 0 ? (totalPoints / subjectCount) : 0;
+            const avgMark = marksCount > 0 ? (totalMarks / marksCount) : 0;
+
+            const bmGrade = grades.BM;
+            const sejGrade = grades.SEJ;
+            
+            const bmPass = bmGrade && !['G', 'TH'].includes(bmGrade);
+            const sejPass = sejGrade && !['G', 'TH'].includes(sejGrade);
+            const isLms = bmPass && sejPass;
+
+            return { gp, subjectCount, totalA, isStraightA, avgMark, isLms, bmGrade, sejGrade, grades, marks };
+        }
+
+        function calculateAndRender() {
+            updateClassSelectOptions();
+            
+            const activeStudentsInStage = studentsData.filter(st => {
+                const ex = getStudentExamData(st, currentExamStage);
+                return Object.keys(ex.grades || {}).length > 0;
+            });
+
+            document.getElementById('header-student-count').textContent = `${activeStudentsInStage.length} Calon (${EXAM_STAGES[currentExamStage]})`;
+
+            const stageTitle = EXAM_STAGES[currentExamStage] || currentExamStage;
+            const activeLabel = document.getElementById('active-stage-label');
+            if (activeLabel) activeLabel.textContent = stageTitle;
+
+            renderOverview();
+            renderClassAnalytics();
+            renderSubjectDeepDive(selectedSubjectKey);
+            renderStudentDirectory();
+            populateSlipStudentPicker();
+        }
+
+        // OVERVIEW RENDER
+        function renderOverview() {
+            let totalSchoolPoints = 0;
+            let totalSchoolSubjects = 0;
+            let totalLms = 0;
+            let straightACount = 0;
+
+            const activeStudents = studentsData.filter(st => {
+                const ex = getStudentExamData(st, currentExamStage);
+                return Object.keys(ex.grades || {}).length > 0;
+            });
+
+            activeStudents.forEach(st => {
+                const stats = calculateStudentStats(st, currentExamStage);
+                totalSchoolPoints += (stats.gp * stats.subjectCount);
+                totalSchoolSubjects += stats.subjectCount;
+                if (stats.isLms) totalLms++;
+                if (stats.isStraightA) straightACount++;
+            });
+
+            const gps = totalSchoolSubjects > 0 ? (totalSchoolPoints / totalSchoolSubjects) : 0;
+            const lmsPct = activeStudents.length > 0 ? ((totalLms / activeStudents.length) * 100) : 0;
+            const tlsCount = activeStudents.length - totalLms;
+            const tlsPct = activeStudents.length > 0 ? ((tlsCount / activeStudents.length) * 100) : 0;
+
+            document.getElementById('kpi-gps').textContent = gps.toFixed(2);
+            document.getElementById('kpi-gps-target-display').textContent = `Sasaran: ${targetGps.toFixed(2)}`;
+            
+            document.getElementById('kpi-lms').textContent = `${lmsPct.toFixed(1)}%`;
+            document.getElementById('kpi-lms-count').textContent = `${totalLms} Calon Lulus`;
+            document.getElementById('kpi-lms-target-display').textContent = `Sasaran: ${targetLms.toFixed(1)}%`;
+
+            document.getElementById('kpi-tls').textContent = `${tlsPct.toFixed(1)}%`;
+            document.getElementById('kpi-tls-count').textContent = `${tlsCount} Calon`;
+            document.getElementById('kpi-tls-target-display').textContent = `Sasaran: ${targetTls.toFixed(1)}%`;
+
+            document.getElementById('kpi-straight-a').textContent = straightACount;
+            document.getElementById('kpi-straight-a-target-display').textContent = `Sasaran: ${targetStraightA}`;
+
+            const sorted = activeStudents.map(st => ({ student: st, stats: calculateStudentStats(st, currentExamStage) }))
+                .filter(item => item.stats.subjectCount > 0)
+                .sort((a, b) => a.stats.gp - b.stats.gp);
+
+            const tbody = document.getElementById('top-students-body');
+            tbody.innerHTML = '';
+
+            if (sorted.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-400 italic">Tiada data murid bagi fasa peperiksaan ini. Sila tambah atau import data.</td></tr>`;
+            } else {
+                // DIKEMASKINI DARI 10 KEPADA TOP 20
+                sorted.slice(0, 20).forEach((item, index) => {
+                    const st = item.student;
+                    const stats = item.stats;
+                    const stClass = getStudentClassForStage(st, currentExamStage);
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark:hover:bg-slate-800/50 transition';
+
+                    const summaryGrades = Object.entries(stats.grades)
+                        .map(([k, v]) => `${k}:${v}`)
+                        .slice(0, 6)
+                        .join(' ');
+
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 text-center font-bold text-emerald-600 dark:text-emerald-400">#${index + 1}</td>
+                        <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">${st.name}</td>
+                        <td class="px-4 py-3 text-center font-bold text-xs">${stClass}</td>
+                        <td class="px-4 py-3 text-center font-extrabold">${stats.gp.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-center font-bold text-emerald-600 dark:text-emerald-400">${stats.avgMark.toFixed(1)}%</td>
+                        <td class="px-4 py-3 font-mono text-[11px] text-gray-500 dark:text-gray-400">${summaryGrades || '-'}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${stats.isLms ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'}">
+                                ${stats.isLms ? 'LAYAK SIJIL' : 'TIDAK LAYAK'}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            renderOverviewCharts();
+        }
+
+        function renderOverviewCharts() {
+            const activeClasses = getActiveClasses();
+            const classLmsMap = {};
+            activeClasses.forEach(c => classLmsMap[c] = { total: 0, lms: 0 });
+
+            studentsData.forEach(st => {
+                const ex = getStudentExamData(st, currentExamStage);
+                if (Object.keys(ex.grades || {}).length > 0) {
+                    const stClass = getStudentClassForStage(st, currentExamStage);
+                    const stats = calculateStudentStats(st, currentExamStage);
+                    if (!classLmsMap[stClass]) classLmsMap[stClass] = { total: 0, lms: 0 };
+                    classLmsMap[stClass].total++;
+                    if (stats.isLms) classLmsMap[stClass].lms++;
+                }
+            });
+
+            const labels = Object.keys(classLmsMap);
+            const dataPcts = labels.map(k => classLmsMap[k].total > 0 ? ((classLmsMap[k].lms / classLmsMap[k].total) * 100).toFixed(1) : 0);
+
+            const ctx1 = document.getElementById('chart-lms-class').getContext('2d');
+            if (chartLmsClass) chartLmsClass.destroy();
+            chartLmsClass = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: `% Layak Sijil (${EXAM_STAGES[currentExamStage]})`,
+                        data: dataPcts,
+                        backgroundColor: '#22c55e',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (val) => val + '%'
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, min: 0, max: 110 } }
+                }
+            });
+
+            const gradeCounts = { 'A+': 0, 'A': 0, 'A-': 0, 'B+': 0, 'B': 0, 'C+': 0, 'C': 0, 'D': 0, 'E': 0, 'G': 0, 'TH': 0 };
+            studentsData.forEach(st => {
+                const stats = calculateStudentStats(st, currentExamStage);
+                Object.values(stats.grades).forEach(g => {
+                    if (gradeCounts[g] !== undefined) gradeCounts[g]++;
+                });
+            });
+
+            const ctx2 = document.getElementById('chart-grade-spread').getContext('2d');
+            if (chartGradeSpread) chartGradeSpread.destroy();
+            chartGradeSpread = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(gradeCounts),
+                    datasets: [{
+                        data: Object.values(gradeCounts),
+                        backgroundColor: ['#10b981','#22c55e','#4ade80','#3b82f6','#60a5fa','#f59e0b','#fbbf24','#f97316','#ef4444','#64748b','#94a3b8']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (val) => val > 0 ? val : ''
+                        }
+                    }
+                }
+            });
+        }
+
+        // CLASS ANALYTICS RENDER
+        function selectClassFilter(className) {
+            currentClassFilter = className;
+            renderClassAnalytics();
+        }
+
+        function renderClassAnalytics() {
+            const activeClasses = getActiveClasses();
+            const pillsContainer = document.getElementById('class-filter-pills');
+            pillsContainer.innerHTML = '';
+
+            activeClasses.forEach(c => {
+                const btn = document.createElement('button');
+                btn.onclick = () => selectClassFilter(c);
+                btn.className = `px-3 py-1.5 rounded-xl font-bold text-xs transition ${c === currentClassFilter ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200'}`;
+                btn.textContent = c;
+                pillsContainer.appendChild(btn);
+            });
+
+            document.getElementById('import-btn-class-label').textContent = currentClassFilter;
+            document.getElementById('class-title').textContent = `Kelas: ${currentClassFilter}`;
+            document.getElementById('class-student-list-label').textContent = currentClassFilter;
+
+            const classStudents = studentsData.filter(st => {
+                const stClass = getStudentClassForStage(st, currentExamStage);
+                const ex = getStudentExamData(st, currentExamStage);
+                return stClass === currentClassFilter && Object.keys(ex.grades || {}).length > 0;
+            });
+
+            document.getElementById('class-subtitle').textContent = `${classStudents.length} Calon Terdaftar (${EXAM_STAGES[currentExamStage]})`;
+
+            let totalPoints = 0;
+            let totalSubs = 0;
+            let lmsCount = 0;
+
+            const classSubjectData = {};
+
+            classStudents.forEach(st => {
+                const stats = calculateStudentStats(st, currentExamStage);
+                totalPoints += (stats.gp * stats.subjectCount);
+                totalSubs += stats.subjectCount;
+                if (stats.isLms) lmsCount++;
+
+                Object.entries(stats.grades).forEach(([subKey, grade]) => {
+                    if (!classSubjectData[subKey]) classSubjectData[subKey] = { candidates: 0, points: 0, passes: 0, totalA: 0, fails: 0 };
+                    classSubjectData[subKey].candidates++;
+                    classSubjectData[subKey].points += (GRADE_POINTS[grade] !== undefined ? GRADE_POINTS[grade] : 9);
+                    if (!['G', 'TH'].includes(grade)) classSubjectData[subKey].passes++;
+                    if (['A+', 'A', 'A-'].includes(grade)) classSubjectData[subKey].totalA++;
+                    if (['G', 'TH'].includes(grade)) classSubjectData[subKey].fails++;
+                });
+            });
+
+            const classGp = totalSubs > 0 ? (totalPoints / totalSubs) : 0;
+            const classLmsPct = classStudents.length > 0 ? ((lmsCount / classStudents.length) * 100) : 0;
+
+            document.getElementById('class-gp-val').textContent = classGp.toFixed(2);
+            document.getElementById('class-lms-val').textContent = `${classLmsPct.toFixed(1)}%`;
+
+            // Render Class Subject Table
+            const subTbody = document.getElementById('class-subject-table-body');
+            subTbody.innerHTML = '';
+
+            if (Object.keys(classSubjectData).length === 0) {
+                subTbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400 italic">Tiada subjek terdaftar dalam kelas ini.</td></tr>`;
+            } else {
+                Object.entries(classSubjectData).forEach(([subKey, info]) => {
+                    const subConf = SUBJECTS_CONFIG[subKey] || { name: subKey, code: subKey };
+                    const gpmp = info.candidates > 0 ? (info.points / info.candidates) : 0;
+                    const passPct = info.candidates > 0 ? ((info.passes / info.candidates) * 100) : 0;
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark:hover:bg-slate-800/50 transition';
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                            <span class="font-bold text-emerald-600 dark:text-emerald-400 mr-2">${subConf.code}</span> ${subConf.name}
+                        </td>
+                        <td class="px-4 py-3 text-center font-bold">${info.candidates}</td>
+                        <td class="px-4 py-3 text-center font-extrabold text-blue-600 dark:text-blue-400">${gpmp.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-center font-bold text-emerald-600 dark:text-emerald-400">${passPct.toFixed(1)}%</td>
+                        <td class="px-4 py-3 text-center font-bold text-amber-500">${info.totalA}</td>
+                        <td class="px-4 py-3 text-center font-bold text-rose-500">${info.fails}</td>
+                    `;
+                    subTbody.appendChild(tr);
+                });
+            }
+
+            // Render Class Student Details Table
+            const searchVal = (document.getElementById('class-student-search-input').value || '').toLowerCase().trim();
+            const classStudentBody = document.getElementById('class-student-table-body');
+            classStudentBody.innerHTML = '';
+
+            const filteredStudents = classStudents.filter(st => st.name.toLowerCase().includes(searchVal));
+
+            if (filteredStudents.length === 0) {
+                classStudentBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-gray-400 italic">Tiada murid ditemui dalam kelas ini.</td></tr>`;
+            } else {
+                filteredStudents.sort((a, b) => calculateStudentStats(a, currentExamStage).gp - calculateStudentStats(b, currentExamStage).gp);
+                
+                filteredStudents.forEach((st, idx) => {
+                    const stats = calculateStudentStats(st, currentExamStage);
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark:hover:bg-slate-800/50 transition';
+
+                    const detailsStr = Object.entries(stats.grades).map(([k, v]) => `${k}:${v}`).join(' ');
+
+                    tr.innerHTML = `
+                        <td class="px-3 py-3 text-center font-bold text-emerald-600 dark:text-emerald-400">#${idx + 1}</td>
+                        <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">${st.name}</td>
+                        <td class="px-3 py-3 text-center font-bold">${st.gender || 'L'}</td>
+                        <td class="px-3 py-3 text-center font-extrabold text-blue-600 dark:text-blue-400">${stats.gp.toFixed(2)}</td>
+                        <td class="px-3 py-3 text-center font-bold">${stats.avgMark.toFixed(1)}%</td>
+                        <td class="px-4 py-3 font-mono text-[11px] text-gray-500 dark:text-gray-400">${detailsStr || '-'}</td>
+                        <td class="px-3 py-3 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${stats.isLms ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'}">
+                                ${stats.isLms ? 'LAYAK SIJIL' : 'TIDAK LAYAK'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="openEditStudentModal('${st.id}')" class="p-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-lg transition" title="Edit Markah Murid">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </td>
+                    `;
+                    classStudentBody.appendChild(tr);
+                });
+            }
+        }
+
+        // SUBJECT GPMP DEEP DIVE
+        function renderSubjectDeepDive(subKey) {
+            selectedSubjectKey = subKey || 'BM';
+
+            const picker = document.getElementById('subject-picker');
+            if (picker) {
+                picker.innerHTML = Object.entries(SUBJECTS_CONFIG).map(([k, conf]) => 
+                    `<option value="${k}" ${k === selectedSubjectKey ? 'selected' : ''}>${conf.code} - ${conf.name}</option>`
+                ).join('');
+            }
+
+            const activeStudents = studentsData.filter(st => {
+                const ex = getStudentExamData(st, currentExamStage);
+                return ex.grades && ex.grades[selectedSubjectKey] !== undefined;
+            });
+
+            const gradeCounts = { 'A+': 0, 'A': 0, 'A-': 0, 'B+': 0, 'B': 0, 'C+': 0, 'C': 0, 'D': 0, 'E': 0, 'G': 0, 'TH': 0 };
+            let totalPoints = 0;
+            let totalCandidates = 0;
+            let passes = 0;
+
+            activeStudents.forEach(st => {
+                const ex = getStudentExamData(st, currentExamStage);
+                const g = ex.grades[selectedSubjectKey];
+                if (gradeCounts[g] !== undefined) {
+                    gradeCounts[g]++;
+                    totalPoints += GRADE_POINTS[g];
+                    totalCandidates++;
+                    if (!['G', 'TH'].includes(g)) passes++;
+                }
+            });
+
+            const gpmp = totalCandidates > 0 ? (totalPoints / totalCandidates) : 0;
+            const passPct = totalCandidates > 0 ? ((passes / totalCandidates) * 100) : 0;
+
+            const ctx = document.getElementById('chart-subject-gpmp').getContext('2d');
+            if (chartSubjectGpmp) chartSubjectGpmp.destroy();
+            chartSubjectGpmp = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(gradeCounts),
+                    datasets: [{
+                        label: `Taburan Gred Subjek (${SUBJECTS_CONFIG[selectedSubjectKey]?.name || selectedSubjectKey})`,
+                        data: Object.values(gradeCounts),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (val) => val
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, min: 0, grace: '15%' } }
+                }
+            });
+
+            const detailsDiv = document.getElementById('subject-inspector-details');
+            detailsDiv.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-center">
+                    <div class="p-3 bg-gray-50 dark:bg-slate-800 rounded-xl">
+                        <span class="text-xs text-gray-500 block font-semibold">Calon Didaftar</span>
+                        <span class="text-xl font-bold text-gray-900 dark:text-white">${totalCandidates}</span>
+                    </div>
+                    <div class="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl">
+                        <span class="text-xs text-blue-600 block font-semibold">GPMP Subjek</span>
+                        <span class="text-xl font-black text-blue-600 dark:text-blue-400">${gpmp.toFixed(2)}</span>
+                    </div>
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl">
+                        <span class="text-xs text-emerald-600 block font-semibold">% Peratus Lulus</span>
+                        <span class="text-xl font-black text-emerald-600 dark:text-emerald-400">${passPct.toFixed(1)}%</span>
+                    </div>
+                    <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl">
+                        <span class="text-xs text-amber-600 block font-semibold">Bilangan Gred A</span>
+                        <span class="text-xl font-black text-amber-500">${gradeCounts['A+'] + gradeCounts['A'] + gradeCounts['A-']}</span>
+                    </div>
+                </div>
+            `;
+
+            renderAllSubjectsComparison();
+        }
+
+        function renderAllSubjectsComparison() {
+            const subjectStatsMap = {};
+
+            studentsData.forEach(st => {
+                const ex = getStudentExamData(st, currentExamStage);
+                if (ex.grades) {
+                    Object.entries(ex.grades).forEach(([subKey, grade]) => {
+                        if (!subjectStatsMap[subKey]) {
+                            subjectStatsMap[subKey] = { candidates: 0, points: 0, passes: 0, totalA: 0, fails: 0 };
+                        }
+                        subjectStatsMap[subKey].candidates++;
+                        subjectStatsMap[subKey].points += (GRADE_POINTS[grade] !== undefined ? GRADE_POINTS[grade] : 9);
+                        if (!['G', 'TH'].includes(grade)) subjectStatsMap[subKey].passes++;
+                        if (['A+', 'A', 'A-'].includes(grade)) subjectStatsMap[subKey].totalA++;
+                        if (['G', 'TH'].includes(grade)) subjectStatsMap[subKey].fails++;
+                    });
+                }
+            });
+
+            const labels = [];
+            const gpmpData = [];
+
+            const tbody = document.getElementById('all-subjects-comparison-tbody');
+            tbody.innerHTML = '';
+
+            if (Object.keys(subjectStatsMap).length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-400 italic">Tiada rekod subjek terdaftar untuk fasa ini.</td></tr>`;
+            } else {
+                Object.entries(subjectStatsMap).forEach(([subKey, info]) => {
+                    const subConf = SUBJECTS_CONFIG[subKey] || { name: subKey, code: subKey };
+                    const gpmp = info.candidates > 0 ? (info.points / info.candidates) : 0;
+                    const passPct = info.candidates > 0 ? ((info.passes / info.candidates) * 100) : 0;
+
+                    labels.push(subConf.code);
+                    gpmpData.push(gpmp.toFixed(2));
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark:hover:bg-slate-800/50 transition';
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                            <span class="font-bold text-emerald-600 dark:text-emerald-400 mr-2">${subConf.code}</span> ${subConf.name}
+                        </td>
+                        <td class="px-3 py-3 text-center font-bold">${info.candidates}</td>
+                        <td class="px-3 py-3 text-center font-extrabold text-blue-600 dark:text-blue-400">${gpmp.toFixed(2)}</td>
+                        <td class="px-3 py-3 text-center font-bold text-emerald-600 dark:text-emerald-400">${passPct.toFixed(1)}%</td>
+                        <td class="px-3 py-3 text-center font-bold text-amber-500">${info.totalA}</td>
+                        <td class="px-3 py-3 text-center font-bold text-rose-500">${info.fails}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${passPct >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : passPct >= 50 ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'}">
+                                ${passPct >= 80 ? 'CEMERLANG' : passPct >= 50 ? 'MEMUASKAN' : 'INTERVENSI'}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            const ctxComp = document.getElementById('chart-all-subjects-comparison').getContext('2d');
+            if (chartAllSubjectsComparison) chartAllSubjectsComparison.destroy();
+            chartAllSubjectsComparison = new Chart(ctxComp, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: `GPMP Subjek (${EXAM_STAGES[currentExamStage]})`,
+                        data: gpmpData,
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (val) => val
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, min: 0, max: 10 } }
+                }
+            });
+        }
+
+        // EXAM STAGE COMPARISON VIEW (6 ITEMS)
+        function getStageStats(stageKey) {
+            // Check if special summary exists in subjectSummaryStore
+            const summaries = subjectSummaryStore[currentYear] || {};
+            const stageSummaries = Object.values(summaries).filter(s => s.stage === stageKey);
+
+            if (stageSummaries.length > 0) {
+                let totalCalon = 0;
+                let totalPoints = 0;
+                let totalPasses = 0;
+                let totalFails = 0;
+                let bmPass = 0, bmFail = 0, bmCandidates = 0, bmPoints = 0;
+                let sejPass = 0, sejFail = 0, sejCandidates = 0, sejPoints = 0;
+
+                stageSummaries.forEach(s => {
+                    totalCalon = Math.max(totalCalon, s.totalCalon);
+                    totalPoints += s.totalPoints;
+                    totalPasses += s.passes;
+                    totalFails += s.fails;
+
+                    if (s.subject === 'BM') {
+                        bmCandidates = s.calonHadir || s.totalCalon;
+                        bmPass = s.passes;
+                        bmFail = s.fails;
+                        bmPoints = s.totalPoints;
+                    }
+                    if (s.subject === 'SEJ') {
+                        sejCandidates = s.calonHadir || s.totalCalon;
+                        sejPass = s.passes;
+                        sejFail = s.fails;
+                        sejPoints = s.totalPoints;
+                    }
+                });
+
+                const totalSubjectHadir = stageSummaries.reduce((acc, curr) => acc + (curr.calonHadir || curr.totalCalon), 0);
+                const gps = totalSubjectHadir > 0 ? (totalPoints / totalSubjectHadir) : 0;
+                const bmGpmp = bmCandidates > 0 ? (bmPoints / bmCandidates) : 0;
+                const sejGpmp = sejCandidates > 0 ? (sejPoints / sejCandidates) : 0;
+                const bmPassPct = bmCandidates > 0 ? ((bmPass / bmCandidates) * 100) : 0;
+                const sejPassPct = sejCandidates > 0 ? ((sejPass / sejCandidates) * 100) : 0;
+
+                // Estimated LMS
+                const lmsCount = Math.min(bmPass, sejPass);
+                const lmsPct = totalCalon > 0 ? ((lmsCount / totalCalon) * 100) : 0;
+                const tlsCount = totalCalon - lmsCount;
+                const tlsPct = totalCalon > 0 ? ((tlsCount / totalCalon) * 100) : 0;
+
+                return { calon: totalCalon, gps, lmsCount, lmsPct, tlsCount, tlsPct, straightA: 0, bmPassPct, bmGpmp, bmFail, sejPassPct, sejGpmp, sejFail, bothFail: Math.max(bmFail, sejFail) };
+            }
+
+            // Otherwise calculate from studentsData
+            const active = studentsData.filter(st => {
+                const ex = getStudentExamData(st, stageKey);
+                return Object.keys(ex.grades || {}).length > 0;
+            });
+
+            if (active.length === 0) {
+                return { calon: 0, gps: 0, lmsCount: 0, lmsPct: 0, tlsCount: 0, tlsPct: 0, straightA: 0, bmPassPct: 0, bmGpmp: 0, bmFail: 0, sejPassPct: 0, sejGpmp: 0, sejFail: 0, bothFail: 0 };
+            }
+
+            let totalPoints = 0;
+            let totalSubjects = 0;
+            let lmsCount = 0;
+            let straightACount = 0;
+            let bmPass = 0, bmFail = 0, bmPoints = 0, bmCand = 0;
+            let sejPass = 0, sejFail = 0, sejPoints = 0, sejCand = 0;
+            let bothFail = 0;
+
+            active.forEach(st => {
+                const stats = calculateStudentStats(st, stageKey);
+                totalPoints += (stats.gp * stats.subjectCount);
+                totalSubjects += stats.subjectCount;
+                if (stats.isLms) lmsCount++;
+                if (stats.isStraightA) straightACount++;
+
+                const bmG = stats.bmGrade;
+                if (bmG) {
+                    bmCand++;
+                    bmPoints += GRADE_POINTS[bmG];
+                    if (!['G', 'TH'].includes(bmG)) bmPass++;
+                    else bmFail++;
+                }
+
+                const sejG = stats.sejGrade;
+                if (sejG) {
+                    sejCand++;
+                    sejPoints += GRADE_POINTS[sejG];
+                    if (!['G', 'TH'].includes(sejG)) sejPass++;
+                    else sejFail++;
+                }
+
+                if (['G', 'TH'].includes(bmG) && ['G', 'TH'].includes(sejG)) {
+                    bothFail++;
+                }
+            });
+
+            const gps = totalSubjects > 0 ? (totalPoints / totalSubjects) : 0;
+            const lmsPct = (lmsCount / active.length) * 100;
+            const tlsCount = active.length - lmsCount;
+            const tlsPct = (tlsCount / active.length) * 100;
+
+            const bmGpmp = bmCand > 0 ? (bmPoints / bmCand) : 0;
+            const sejGpmp = sejCand > 0 ? (sejPoints / sejCand) : 0;
+            const bmPassPct = bmCand > 0 ? ((bmPass / bmCand) * 100) : 0;
+            const sejPassPct = sejCand > 0 ? ((sejPass / sejCand) * 100) : 0;
+
+            return { calon: active.length, gps, lmsCount, lmsPct, tlsCount, tlsPct, straightA: straightACount, bmPassPct, bmGpmp, bmFail, sejPassPct, sejGpmp, sejFail, bothFail };
+        }
+
+        function renderComparisonView() {
+            const stages = ['SPM_2025', 'PPT_F4', 'PAT_F4', 'PPT_F5', 'PPC_F5', 'ETR_2026'];
+            const labels = stages.map(s => EXAM_STAGES[s]);
+            
+            const gpsData = [];
+            const lmsData = [];
+            const lmsCounts = [];
+            const tlsCounts = [];
+            const bmPassPcts = [];
+            const sejPassPcts = [];
+            const bmFails = [];
+            const sejFails = [];
+            const bothFails = [];
+
+            // Table 1: LMS & GPS Comparison
+            const tbody1 = document.getElementById('table-comparison-lms-gps');
+            tbody1.innerHTML = '';
+
+            // Table 2: BM & SEJ Pass Comparison
+            const tbody2 = document.getElementById('table-comparison-bm-sej');
+            tbody2.innerHTML = '';
+
+            // Table 4: Failed BM & SEJ Comparison
+            const tbody4 = document.getElementById('table-comparison-failed-bm-sej');
+            tbody4.innerHTML = '';
+
+            stages.forEach(stKey => {
+                const stats = getStageStats(stKey);
+                gpsData.push(parseFloat(stats.gps.toFixed(2)));
+                lmsData.push(parseFloat(stats.lmsPct.toFixed(1)));
+                lmsCounts.push(stats.lmsCount);
+                tlsCounts.push(stats.tlsCount);
+                bmPassPcts.push(parseFloat(stats.bmPassPct.toFixed(1)));
+                sejPassPcts.push(parseFloat(stats.sejPassPct.toFixed(1)));
+                bmFails.push(stats.bmFail);
+                sejFails.push(stats.sejFail);
+                bothFails.push(stats.bothFail);
+
+                // Table 1 Row
+                const tr1 = document.createElement('tr');
+                tr1.className = 'hover:bg-gray-50 dark:hover:bg-slate-800/50 transition';
+                tr1.innerHTML = `
+                    <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">${EXAM_STAGES[stKey]}</td>
+                    <td class="px-3 py-3 text-center font-bold">${stats.calon}</td>
+                    <td class="px-3 py-3 text-center font-extrabold text-blue-600 dark:text-blue-400">${stats.gps.toFixed(2)}</td>
+                    <td class="px-3 py-3 text-center font-bold text-emerald-600">${stats.lmsCount}</td>
+                    <td class="px-3 py-3 text-center font-extrabold text-emerald-600">${stats.lmsPct.toFixed(1)}%</td>
+                    <td class="px-3 py-3 text-center font-bold text-rose-500">${stats.tlsCount}</td>
+                    <td class="px-3 py-3 text-center font-bold text-rose-500">${stats.tlsPct.toFixed(1)}%</td>
+                    <td class="px-4 py-3 text-center font-bold text-amber-500">${stats.straightA}</td>
+                `;
+                tbody1.appendChild(tr1);
+
+                // Table 2 Row
+                const tr2 = document.createElement('tr');
+                tr2.className = 'hover:bg-gray-50 dark:hover:bg-slate-800/50 transition';
+                tr2.innerHTML = `
+                    <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">${EXAM_STAGES[stKey]}</td>
+                    <td class="px-3 py-3 text-center font-bold text-blue-600">${stats.bmPassPct.toFixed(1)}%</td>
+                    <td class="px-3 py-3 text-center font-extrabold text-blue-600">${stats.bmGpmp.toFixed(2)}</td>
+                    <td class="px-3 py-3 text-center font-bold text-rose-500">${stats.bmFail}</td>
+                    <td class="px-3 py-3 text-center font-bold text-amber-600">${stats.sejPassPct.toFixed(1)}%</td>
+                    <td class="px-3 py-3 text-center font-extrabold text-amber-600">${stats.sejGpmp.toFixed(2)}</td>
+                    <td class="px-3 py-3 text-center font-bold text-rose-500">${stats.sejFail}</td>
+                `;
+                tbody2.appendChild(tr2);
+
+                // Table 4 Row
+                const tr4 = document.createElement('tr');
+                tr4.className = 'hover:bg-gray-50 dark:hover:bg-slate-800/50 transition';
+                tr4.innerHTML = `
+                    <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">${EXAM_STAGES[stKey]}</td>
+                    <td class="px-3 py-3 text-center font-bold">${stats.calon}</td>
+                    <td class="px-3 py-3 text-center font-bold text-rose-600">${stats.bmFail}</td>
+                    <td class="px-3 py-3 text-center font-bold text-rose-600">${stats.calon > 0 ? ((stats.bmFail / stats.calon) * 100).toFixed(1) : 0}%</td>
+                    <td class="px-3 py-3 text-center font-bold text-rose-600">${stats.sejFail}</td>
+                    <td class="px-3 py-3 text-center font-bold text-rose-600">${stats.calon > 0 ? ((stats.sejFail / stats.calon) * 100).toFixed(1) : 0}%</td>
+                    <td class="px-3 py-3 text-center font-extrabold text-rose-600">${stats.bothFail}</td>
+                    <td class="px-4 py-3 text-center font-extrabold text-rose-600">${stats.tlsPct.toFixed(1)}%</td>
+                `;
+                tbody4.appendChild(tr4);
+            });
+
+            // 1. Trend Chart GPS
+            const ctxGps = document.getElementById('chart-comparison-gps').getContext('2d');
+            if (chartCompGps) chartCompGps.destroy();
+            chartCompGps = new Chart(ctxGps, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'GPS Merentasi Fasa',
+                        data: gpsData,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (val) => val
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, min: 0, max: 10 } }
+                }
+            });
+
+            // 2. Trend Chart % LMS
+            const ctxLms = document.getElementById('chart-comparison-lms').getContext('2d');
+            if (chartCompLms) chartCompLms.destroy();
+            chartCompLms = new Chart(ctxLms, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: '% LMS Merentasi Fasa',
+                        data: lmsData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (val) => val + '%'
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, min: 0, max: 110 } }
+                }
+            });
+
+            // 3. GRAF BAHAGIAN 1: LMS vs TLS Counts
+            const ctxLmsTls = document.getElementById('chart-comparison-lms-tls-bar').getContext('2d');
+            if (chartCompLmsTls) chartCompLmsTls.destroy();
+            chartCompLmsTls = new Chart(ctxLmsTls, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Bil. Layak Sijil (LMS)',
+                            data: lmsCounts,
+                            backgroundColor: '#22c55e',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Bil. Tidak Layak (TLS)',
+                            data: tlsCounts,
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (val) => val
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, grace: '15%' } }
+                }
+            });
+
+            // 4. GRAF BAHAGIAN 2: % Lulus BM vs SEJ
+            const ctxBmSej = document.getElementById('chart-comparison-bm-sej-bar').getContext('2d');
+            if (chartCompBmSej) chartCompBmSej.destroy();
+            chartCompBmSej = new Chart(ctxBmSej, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'BM % Lulus',
+                            data: bmPassPcts,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'SEJ % Lulus',
+                            data: sejPassPcts,
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (val) => val + '%'
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, min: 0, max: 110 } }
+                }
+            });
+
+            // 5. GRAF BAHAGIAN 4: Bilangan Gagal BM, SEJ & Kedua-duanya
+            const ctxFailed = document.getElementById('chart-comparison-failed-bm-sej-bar').getContext('2d');
+            if (chartCompFailedBmSej) chartCompFailedBmSej.destroy();
+            chartCompFailedBmSej = new Chart(ctxFailed, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Bil. Gagal BM',
+                            data: bmFails,
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Bil. Gagal SEJ',
+                            data: sejFails,
+                            backgroundColor: '#f97316',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Gagal Kedua-duanya',
+                            data: bothFails,
+                            backgroundColor: '#a855f7',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (val) => val
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, grace: '15%' } }
+                }
+            });
+
+            // Table 3 & Graf Subjek Perbandingan
+            renderTableComparisonSubjectsAll(stages);
+        }
+
+        function renderTableComparisonSubjectsAll(stages) {
+            const tbody = document.getElementById('table-comparison-subjects-all');
+            tbody.innerHTML = '';
+
+            const subLabels = [];
+            const spm2025Gpmp = [];
+            const trialGpmp = [];
+            const etr2026Gpmp = [];
+
+            Object.entries(SUBJECTS_CONFIG).forEach(([subKey, subConf]) => {
+                let isTakenInAnyStage = false;
+                const stageValues = {};
+                const stageGpmpRaw = {};
+
+                stages.forEach(stKey => {
+                    const summaries = subjectSummaryStore[currentYear] || {};
+                    const docId = `${stKey}_${subKey}`;
+                    if (summaries[docId]) {
+                        isTakenInAnyStage = true;
+                        stageValues[stKey] = `${summaries[docId].passPct.toFixed(0)}% / ${summaries[docId].gpmp.toFixed(2)}`;
+                        stageGpmpRaw[stKey] = parseFloat(summaries[docId].gpmp.toFixed(2));
+                    } else {
+                        const active = studentsData.filter(st => {
+                            const ex = getStudentExamData(st, stKey);
+                            return ex.grades && ex.grades[subKey] !== undefined;
+                        });
+
+                        if (active.length > 0) {
+                            isTakenInAnyStage = true;
+                            let points = 0, passes = 0;
+                            active.forEach(st => {
+                                const g = getStudentExamData(st, stKey).grades[subKey];
+                                points += GRADE_POINTS[g];
+                                if (!['G', 'TH'].includes(g)) passes++;
+                            });
+                            const passPct = (passes / active.length) * 100;
+                            const gpmp = points / active.length;
+                            stageValues[stKey] = `${passPct.toFixed(0)}% / ${gpmp.toFixed(2)}`;
+                            stageGpmpRaw[stKey] = parseFloat(gpmp.toFixed(2));
+                        } else {
+                            stageValues[stKey] = '-';
+                            stageGpmpRaw[stKey] = null;
+                        }
+                    }
+                });
+
+                if (isTakenInAnyStage) {
+                    subLabels.push(subConf.code);
+                    spm2025Gpmp.push(stageGpmpRaw['SPM_2025']);
+                    trialGpmp.push(stageGpmpRaw['PPC_F5']);
+                    etr2026Gpmp.push(stageGpmpRaw['ETR_2026']);
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50 dark:hover:bg-slate-800/50 transition';
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                            <span class="font-bold text-emerald-600 dark:text-emerald-400 mr-2">${subConf.code}</span> ${subConf.name}
+                        </td>
+                        <td class="px-2 py-3 text-center font-bold text-gray-600 dark:text-gray-300">${stageValues['SPM_2025']}</td>
+                        <td class="px-2 py-3 text-center font-bold text-gray-600 dark:text-gray-300">${stageValues['PPT_F4']}</td>
+                        <td class="px-2 py-3 text-center font-bold text-gray-600 dark:text-gray-300">${stageValues['PAT_F4']}</td>
+                        <td class="px-2 py-3 text-center font-bold text-gray-600 dark:text-gray-300">${stageValues['PPT_F5']}</td>
+                        <td class="px-2 py-3 text-center font-extrabold text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20">${stageValues['PPC_F5']}</td>
+                        <td class="px-2 py-3 text-center font-extrabold text-purple-600 bg-purple-50/50 dark:bg-purple-950/20">${stageValues['ETR_2026']}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            if (tbody.children.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-400 italic">Tiada subjek terdaftar untuk fasa perbandingan ini.</td></tr>`;
+            }
+
+            // 6. GRAF BAHAGIAN 3: Perbandingan GPMP Multi-Subjek
+            const ctxSubMulti = document.getElementById('chart-comparison-subjects-gpmp-multi').getContext('2d');
+            if (chartCompSubMulti) chartCompSubMulti.destroy();
+            chartCompSubMulti = new Chart(ctxSubMulti, {
+                type: 'bar',
+                data: {
+                    labels: subLabels,
+                    datasets: [
+                        {
+                            label: 'SPM 2025 GPMP',
+                            data: spm2025Gpmp,
+                            backgroundColor: '#64748b',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Percubaan SPM GPMP',
+                            data: trialGpmp,
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'ETR 2026 GPMP',
+                            data: etr2026Gpmp,
+                            backgroundColor: '#9333ea',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 25 } },
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (val) => val !== null && val !== undefined ? val : ''
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, min: 0, max: 10 } }
+                }
+            });
+        }
+
+        // STUDENT DIRECTORY RENDER
+        function renderStudentDirectory() {
+            const searchVal = (document.getElementById('student-search-input').value || '').toLowerCase().trim();
+            const classFilter = document.getElementById('student-class-filter').value || 'ALL';
+            const lmsFilter = document.getElementById('student-lms-filter').value || 'ALL';
+
+            const tbody = document.getElementById('student-directory-body');
+            tbody.innerHTML = '';
+            currentlyDisplayedStudentIds = [];
+
+            const filtered = studentsData.filter(st => {
+                const ex = getStudentExamData(st, currentExamStage);
+                const stClass = getStudentClassForStage(st, currentExamStage);
+                const stats = calculateStudentStats(st, currentExamStage);
+
+                const matchesName = st.name.toLowerCase().includes(searchVal);
+                const matchesClass = (classFilter === 'ALL' || stClass === classFilter);
+                const matchesLms = (lmsFilter === 'ALL' || (lmsFilter === 'LMS' && stats.isLms) || (lmsFilter === 'TLS' && !stats.isLms));
+
+                return matchesName && matchesClass && matchesLms && Object.keys(ex.grades || {}).length > 0;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-gray-400 italic">Tiada pelajar dijumpai.</td></tr>`;
+                return;
+            }
+
+            filtered.sort((a, b) => calculateStudentStats(a, currentExamStage).gp - calculateStudentStats(b, currentExamStage).gp);
+
+            filtered.forEach(st => {
+                currentlyDisplayedStudentIds.push(st.id);
+                const stats = calculateStudentStats(st, currentExamStage);
+                const stClass = getStudentClassForStage(st, currentExamStage);
+                const isChecked = selectedStudentsForDelete.includes(st.id);
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 dark:hover:bg-slate-800/50 transition';
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-center">
+                        <input type="checkbox" value="${st.id}" ${isChecked ? 'checked' : ''} onclick="toggleSelectStudent('${st.id}')" class="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                    </td>
+                    <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">${st.name}</td>
+                    <td class="px-4 py-3 font-bold text-xs">${stClass}</td>
+                    <td class="px-4 py-3 text-center font-bold">${st.gender || 'L'}</td>
+                    <td class="px-4 py-3 text-center font-extrabold text-blue-600 dark:text-blue-400">${stats.gp.toFixed(2)}</td>
+                    <td class="px-4 py-3 text-center font-bold text-emerald-600">${stats.avgMark.toFixed(1)}%</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${stats.isLms ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'}">
+                            ${stats.isLms ? 'LAYAK SIJIL' : 'TIDAK LAYAK'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-center flex justify-center gap-2">
+                        <button onclick="openEditStudentModal('${st.id}')" class="p-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-lg transition" title="Edit Markah">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="promptDeleteSingleStudent('${st.id}')" class="p-1.5 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 rounded-lg transition" title="Padam Murid">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleSelectStudent(id) {
+            if (selectedStudentsForDelete.includes(id)) {
+                selectedStudentsForDelete = selectedStudentsForDelete.filter(i => i !== id);
+            } else {
+                selectedStudentsForDelete.push(id);
+            }
+            updateBulkDeleteBtn();
+        }
+
+        function toggleSelectAllStudents(masterCb) {
+            if (masterCb.checked) {
+                selectedStudentsForDelete = [...currentlyDisplayedStudentIds];
+            } else {
+                selectedStudentsForDelete = [];
+            }
+            renderStudentDirectory();
+            updateBulkDeleteBtn();
+        }
+
+        function updateBulkDeleteBtn() {
+            const btn = document.getElementById('btn-bulk-delete');
+            const count = document.getElementById('bulk-delete-count');
+            if (selectedStudentsForDelete.length > 0) {
+                btn.classList.remove('hidden');
+                count.textContent = selectedStudentsForDelete.length;
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+
+        function promptDeleteSingleStudent(id) {
+            deleteTargetId = id;
+            document.getElementById('confirm-modal-title').textContent = 'Padam Rekod Pelajar';
+            document.getElementById('confirm-modal-msg').textContent = 'Adakah anda pasti untuk memadamkan rekod pelajar ini dari pangkalan data?';
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+
+        function promptBulkDelete() {
+            deleteTargetId = null;
+            document.getElementById('confirm-modal-title').textContent = `Padam ${selectedStudentsForDelete.length} Pelajar Terpilih`;
+            document.getElementById('confirm-modal-msg').textContent = `Adakah anda pasti untuk memadamkan semua ${selectedStudentsForDelete.length} rekod pelajar terpilih?`;
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('modal-confirm').classList.add('hidden');
+        }
+
+        function executeDeleteStudents() {
+            const toDelete = deleteTargetId ? [deleteTargetId] : selectedStudentsForDelete;
+
+            toDelete.forEach(id => {
+                studentsData = studentsData.filter(s => s.id !== id);
+                if (window.db) {
+                    window.fsDeleteDoc(window.fsDoc(window.db, `students_${currentYear}`, id));
+                }
+            });
+
+            selectedStudentsForDelete = [];
+            closeConfirmModal();
+            calculateAndRender();
+            showToast(`Berjaya memadamkan rekod terpilih.`, 'success');
+        }
+
+        // PRINTABLE SLIP GENERATOR (SHOWING ALL 4 PHASES)
+        function populateSlipStudentPicker() {
+            const select = document.getElementById('slip-student-select');
+            if (!select) return;
+
+            const searchVal = (document.getElementById('slip-search-input')?.value || '').toLowerCase().trim();
+
+            select.innerHTML = '';
+            const activeStudents = studentsData.filter(st => st.name.toLowerCase().includes(searchVal));
+
+            if (activeStudents.length === 0) {
+                select.innerHTML = `<option value="">Tiada Pelajar Diperoleh</option>`;
+                document.getElementById('printable-slip-area').innerHTML = `<p class="text-center text-gray-400 py-8">Sila pilih pelajar untuk mencetak slip keputusan 4 fasa.</p>`;
+                return;
+            }
+
+            activeStudents.forEach(st => {
+                const opt = document.createElement('option');
+                opt.value = st.id;
+                opt.textContent = `${st.name} (${st.class || 'SMK KDGK'})`;
+                select.appendChild(opt);
+            });
+
+            renderStudentResultSlip(activeStudents[0].id);
+        }
+
+        function filterSlipStudentDropdown() {
+            populateSlipStudentPicker();
+        }
+
+        function renderStudentResultSlip(studentId) {
+            const slipArea = document.getElementById('printable-slip-area');
+            if (!studentId) {
+                slipArea.innerHTML = `<p class="text-center text-gray-400 py-8">Sila pilih pelajar dari senarai di atas.</p>`;
+                return;
+            }
+
+            const student = studentsData.find(s => s.id === studentId);
+            if (!student) {
+                slipArea.innerHTML = `<p class="text-center text-gray-400 py-8">Data pelajar tidak dijumpai.</p>`;
+                return;
+            }
+
+            // 4 main stages to display in slip
+            const slipStages = [
+                { key: 'PPT_F4', label: 'PPT TINGKATAN 4' },
+                { key: 'PAT_F4', label: 'PAT TINGKATAN 4' },
+                { key: 'PPT_F5', label: 'PPT TINGKATAN 5' },
+                { key: 'PPC_F5', label: 'PERCUBAAN SPM' }
+            ];
+
+            // Collect all subjects taken by student across 4 stages
+            const allSubjectsSet = new Set();
+            slipStages.forEach(st => {
+                const ex = getStudentExamData(student, st.key);
+                if (ex.grades) {
+                    Object.keys(ex.grades).forEach(k => allSubjectsSet.add(k));
+                }
+            });
+
+            // Calculate stats for each stage
+            const stageStatsMap = {};
+            slipStages.forEach(st => {
+                stageStatsMap[st.key] = calculateStudentStats(student, st.key);
+            });
+
+            let tableRowsHtml = '';
+            if (allSubjectsSet.size === 0) {
+                tableRowsHtml = `<tr><td colspan="6" class="text-center py-6 text-gray-400 italic">Tiada maklumat markah dan gred direkodkan bagi murid ini.</td></tr>`;
+            } else {
+                Array.from(allSubjectsSet).forEach(subKey => {
+                    const subConf = SUBJECTS_CONFIG[subKey] || { name: subKey, code: subKey };
+
+                    let cellsHtml = '';
+                    slipStages.forEach(st => {
+                        const ex = getStudentExamData(student, st.key);
+                        const mark = ex.marks && ex.marks[subKey] !== undefined ? ex.marks[subKey] : '-';
+                        const grade = ex.grades && ex.grades[subKey] ? ex.grades[subKey] : '-';
+                        
+                        cellsHtml += `
+                            <td class="px-3 py-2 text-center font-semibold border-l border-gray-200">
+                                <span class="text-gray-700">${mark}</span> 
+                                <span class="ml-1 font-extrabold ${['A+','A','A-'].includes(grade) ? 'text-amber-600' : ['G','TH'].includes(grade) ? 'text-rose-600' : 'text-emerald-700'}">(${grade})</span>
+                            </td>
+                        `;
+                    });
+
+                    tableRowsHtml += `
+                        <tr class="border-b border-gray-200 text-xs">
+                            <td class="px-3 py-2.5 font-bold text-gray-800">${subConf.code}</td>
+                            <td class="px-3 py-2.5 font-semibold text-gray-900">${subConf.name}</td>
+                            ${cellsHtml}
+                        </tr>
+                    `;
+                });
+            }
+
+            // Summary stats across 4 phases
+            let summaryHeadersHtml = '';
+            let summaryGpsHtml = '';
+            let summaryLmsHtml = '';
+
+            slipStages.forEach(st => {
+                const stats = stageStatsMap[st.key];
+                summaryHeadersHtml += `<th class="px-2 py-2 text-center border-l border-gray-300 font-bold">${st.label}</th>`;
+                summaryGpsHtml += `<td class="px-2 py-2 text-center border-l border-gray-300 font-extrabold text-blue-700">${stats.subjectCount > 0 ? stats.gp.toFixed(2) : '-'}</td>`;
+                summaryLmsHtml += `<td class="px-2 py-2 text-center border-l border-gray-300 font-bold ${stats.isLms ? 'text-emerald-700' : 'text-rose-600'}">${stats.subjectCount > 0 ? (stats.isLms ? 'LULUS' : 'GAGAL') : '-'}</td>`;
+            });
+
+            slipArea.innerHTML = `
+                <div class="text-center border-b border-gray-300 pb-4 space-y-1">
+                    <h2 class="text-xl font-black tracking-wide text-gray-900 uppercase">SEKOLAH MENENGAH KEBANGSAAN KG. DATO' SERI KAMARUDDIN</h2>
+                    <p class="text-xs text-gray-600">SLIP KEPUTUSAN PEPERIKSAAN & ANALISIS PRESTASI SPM (2025 - ${currentYear})</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-xs font-semibold py-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <div>
+                        <p class="text-gray-500">NAMA PELAJAR:</p>
+                        <p class="text-sm font-black text-gray-900 mt-0.5">${student.name}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500">KELAS / TAHUN SPM:</p>
+                        <p class="text-sm font-black text-gray-900 mt-0.5">${student.class || '5 SC'} / TAHUN SPM ${currentYear}</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-gray-800">PERINCIAN KEPUTUSAN MERENTASI 4 FASA PEPERIKSAAN</h3>
+                    <div class="overflow-x-auto border border-gray-300 rounded-xl">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-100 text-gray-800 text-xs font-bold border-b border-gray-300 uppercase">
+                                <tr>
+                                    <th class="px-3 py-2.5">KOD</th>
+                                    <th class="px-3 py-2.5">MATA PELAJARAN</th>
+                                    <th class="px-3 py-2.5 text-center border-l border-gray-300">PPT T4</th>
+                                    <th class="px-3 py-2.5 text-center border-l border-gray-300">PAT T4</th>
+                                    <th class="px-3 py-2.5 text-center border-l border-gray-300">PPT T5</th>
+                                    <th class="px-3 py-2.5 text-center border-l border-gray-300 bg-emerald-100/60">PERCUBAAN SPM</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-2">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-gray-800">RUMUSAN GRED PURATA (GP) & STATUS LAYAK SIJIL (LMS)</h3>
+                    <div class="overflow-x-auto border border-gray-300 rounded-xl">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-gray-100 text-gray-800 uppercase border-b border-gray-300">
+                                <tr>
+                                    <th class="px-3 py-2 font-bold">INDIKATOR PRESTASI</th>
+                                    ${summaryHeadersHtml}
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-3 py-2 font-bold text-gray-800">GRED PURATA MURID (GPM)</td>
+                                    ${summaryGpsHtml}
+                                </tr>
+                                <tr>
+                                    <td class="px-3 py-2 font-bold text-gray-800">STATUS SIJIL SPM (LMS)</td>
+                                    ${summaryLmsHtml}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-end pt-12 text-xs">
+                    <div class="text-center space-y-12">
+                        <p class="font-bold text-gray-700">TANDATANGAN IBU BAPA / PENJAGA</p>
+                        <p class="border-t border-gray-400 pt-1 px-8 font-semibold"> ( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
+                    </div>
+                    <div class="text-center space-y-12">
+                        <p class="font-bold text-gray-700">TANDATANGAN PENGETUA / PK PENTADBIRAN</p>
+                        <p class="border-t border-gray-400 pt-1 px-8 font-semibold"> ( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // MODAL HANDLERS FOR STUDENT ADD / EDIT / TRANSFER / IMPORT
+        function openAddStudentModal() {
+            document.getElementById('modal-student-title').textContent = 'Tambah Pelajar Baru';
+            document.getElementById('student-edit-id').value = '';
+            document.getElementById('input-student-name').value = '';
+            document.getElementById('modal-stage-indicator').textContent = EXAM_STAGES[currentExamStage];
+            document.getElementById('form-stage-label').textContent = EXAM_STAGES[currentExamStage];
+
+            const activeClasses = getActiveClasses();
+            document.getElementById('input-student-class').innerHTML = activeClasses.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            renderSubjectInputsForm({});
+            document.getElementById('modal-student').classList.remove('hidden');
+        }
+
+        function openEditStudentModal(id) {
+            const student = studentsData.find(s => s.id === id);
+            if (!student) return;
+
+            document.getElementById('modal-student-title').textContent = `Edit Pelajar: ${student.name}`;
+            document.getElementById('student-edit-id').value = student.id;
+            document.getElementById('input-student-name').value = student.name;
+            document.getElementById('modal-stage-indicator').textContent = EXAM_STAGES[currentExamStage];
+            document.getElementById('form-stage-label').textContent = EXAM_STAGES[currentExamStage];
+
+            const activeClasses = getActiveClasses();
+            const ex = getStudentExamData(student, currentExamStage);
+            const stClass = ex.class || student.class || activeClasses[0];
+
+            document.getElementById('input-student-class').innerHTML = activeClasses.map(c => `<option value="${c}" ${c === stClass ? 'selected' : ''}>${c}</option>`).join('');
+
+            renderSubjectInputsForm(ex.marks || {}, ex.grades || {});
+            document.getElementById('modal-student').classList.remove('hidden');
+        }
+
+        function renderSubjectInputsForm(existingMarks = {}, existingGrades = {}) {
+            const container = document.getElementById('subject-inputs-container');
+            container.innerHTML = '';
+
+            Object.entries(SUBJECTS_CONFIG).forEach(([subKey, subConf]) => {
+                const markVal = existingMarks[subKey] !== undefined ? existingMarks[subKey] : '';
+                const gradeVal = existingGrades[subKey] !== undefined ? existingGrades[subKey] : '';
+
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2 p-2 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700';
+                div.innerHTML = `
+                    <span class="w-10 font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">${subKey}</span>
+                    <span class="flex-1 text-[11px] font-semibold truncate" title="${subConf.name}">${subConf.name}</span>
+                    <input type="number" min="0" max="100" placeholder="Markah" value="${markVal}" id="subject-mark-${subKey}" class="w-16 p-1 text-center bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-xs font-bold">
+                    <input type="text" placeholder="Gred" value="${gradeVal}" id="subject-grade-${subKey}" class="w-12 p-1 text-center bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-xs font-bold uppercase">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function closeStudentModal() {
+            document.getElementById('modal-student').classList.add('hidden');
+        }
+
+        function handleSaveStudent(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById('student-edit-id').value;
+            const name = document.getElementById('input-student-name').value.toUpperCase().trim();
+            const cls = document.getElementById('input-student-class').value;
+            const gender = document.querySelector('input[name="input-student-gender"]:checked').value;
+
+            const grades = {};
+            const marks = {};
+
+            Object.keys(SUBJECTS_CONFIG).forEach(subKey => {
+                const markInput = document.getElementById(`subject-mark-${subKey}`);
+                const gradeInput = document.getElementById(`subject-grade-${subKey}`);
+
+                if (markInput && gradeInput) {
+                    const mVal = markInput.value.trim();
+                    let gVal = gradeInput.value.trim().toUpperCase();
+
+                    if (mVal !== '' && gVal === '') {
+                        gVal = getGradeFromMark(mVal);
+                    }
+
+                    if (gVal !== '') {
+                        grades[subKey] = gVal;
+                        if (mVal !== '') marks[subKey] = parseFloat(mVal);
+                    }
+                }
+            });
+
+            let student = editId ? studentsData.find(s => s.id === editId) : null;
+
+            if (!student) {
+                const id = 'STU_' + Date.now();
+                student = { id, name, class: cls, gender, exams: {} };
+                studentsData.push(student);
+            } else {
+                student.name = name;
+                student.class = cls;
+                student.gender = gender;
+            }
+
+            if (!student.exams) student.exams = {};
+            student.exams[currentExamStage] = { class: cls, grades, marks };
+
+            if (window.db) {
+                window.fsSetDoc(window.fsDoc(window.db, `students_${currentYear}`, student.id), student);
+            }
+
+            closeStudentModal();
+            calculateAndRender();
+            showToast(`Rekod pelajar ${name} disimpan!`, 'success');
+        }
+
+        // IMPORT MODAL OPENERS
+        function openImportModalForCurrentClass() {
+            importTargetStage = currentExamStage;
+            targetImportClass = currentClassFilter;
+            document.getElementById('import-stage-indicator').textContent = `${EXAM_STAGES[currentExamStage]} (Kelas: ${currentClassFilter})`;
+            document.getElementById('modal-import').classList.remove('hidden');
+        }
+
+        function openImportModalForSpecialStage(stageKey) {
+            importTargetStage = stageKey;
+            targetImportClass = null;
+            document.getElementById('import-stage-indicator').textContent = EXAM_STAGES[stageKey] || stageKey;
+            document.getElementById('modal-import').classList.remove('hidden');
+        }
+
+        function closeImportModal() {
+            document.getElementById('modal-import').classList.add('hidden');
+        }
+
+        // TRANSFER MODAL
+        function openTransferModal() {
+            const select = document.getElementById('transfer-student-select');
+            select.innerHTML = studentsData.map(st => `<option value="${st.id}">${st.name} (${st.class || '5 SC'})</option>`).join('');
+
+            const activeClasses = getActiveClasses();
+            document.getElementById('transfer-target-class').innerHTML = activeClasses.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            document.getElementById('modal-transfer').classList.remove('hidden');
+        }
+
+        function closeTransferModal() {
+            document.getElementById('modal-transfer').classList.add('hidden');
+        }
+
+        function handleTransferStudent(e) {
+            e.preventDefault();
+            const studentId = document.getElementById('transfer-student-select').value;
+            const stageKey = document.getElementById('transfer-stage-select').value;
+            const targetClass = document.getElementById('transfer-target-class').value;
+
+            const student = studentsData.find(s => s.id === studentId);
+            if (!student) return;
+
+            if (!student.exams) student.exams = {};
+            if (!student.exams[stageKey]) {
+                student.exams[stageKey] = { class: targetClass, grades: {}, marks: {} };
+            } else {
+                student.exams[stageKey].class = targetClass;
+            }
+
+            student.class = targetClass;
+
+            if (window.db) {
+                window.fsSetDoc(window.fsDoc(window.db, `students_${currentYear}`, student.id), student);
+            }
+
+            closeTransferModal();
+            calculateAndRender();
+            showToast(`Pelajar ${student.name} dipindahkan ke kelas ${targetClass}!`, 'success');
+        }
+
+        // INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            updateClassSelectOptions();
+            calculateAndRender();
+        });
+
+        window.addEventListener('firebase-ready', () => {
+            setupFirestoreListeners(currentYear);
+        });
+    </script>
+
+    <!-- PENDAFTARAN SERVICE WORKER UNTUK OFFLINE -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('Service Worker berdaftar! Aplikasi bersedia untuk offline.'))
+            .catch(err => console.log('Ralat Service Worker:', err));
+        });
+      }
+    </script>
+</body>
+</html>
